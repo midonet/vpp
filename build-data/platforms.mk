@@ -41,12 +41,13 @@ install-deb: $(patsubst %,%-find-source,$(ROOT_PACKAGES))
 									\
 	: plugins package ;						\
 	./scripts/find-plugins-contents $(INSTALL_PREFIX)$(ARCH)	\
-	 deb/debian/vpp-plugins.install ;				\
-									\
-	: dpdk headers ;						\
-	./scripts/find-dpdk-contents $(INSTALL_PREFIX)$(ARCH)		\
-	 deb/debian/vpp-dpdk-dev.install ;				\
-									\
+	deb/debian/vpp-plugins.install   				\
+                                                                        \
+        : dpdk headers ;						\
+        test "$($(PLATFORM)_uses_dpdk)" = "yes" &&                      \
+	./scripts/find-dpdk-contents $(INSTALL_PREFIX)$(ARCH)           \
+            deb/debian/vpp-dpdk-dev.install ;                           \
+                                                                        \
 	: bin package needs startup config ; 				\
 	echo ../../vpp/conf/startup.conf /etc/vpp 			\
 	   >> deb/debian/vpp.install ;					\
