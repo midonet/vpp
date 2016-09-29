@@ -92,6 +92,9 @@ typedef enum {
   /** This packets needs to go to ICMP error */
   IP_LOOKUP_NEXT_ICMP_ERROR,
 
+  /** Packet should go to fip64 */
+  IP_LOOKUP_NEXT_FIP64,
+
   IP_LOOKUP_N_NEXT,
 } ip_lookup_next_t;
 
@@ -119,6 +122,7 @@ typedef enum {
     [IP_LOOKUP_NEXT_MAP_T] = "ip4-map-t",			\
     [IP_LOOKUP_NEXT_INDIRECT] = "ip4-indirect",			\
     [IP_LOOKUP_NEXT_ICMP_ERROR] = "ip4-icmp-error",		\
+      [IP_LOOKUP_NEXT_FIP64] = "ip6-drop"  /* FIXME , put a proper node */ \
 }
 
 #define IP6_LOOKUP_NEXT_NODES {					\
@@ -133,6 +137,7 @@ typedef enum {
     [IP_LOOKUP_NEXT_MAP_T] = "ip6-map-t",			\
     [IP_LOOKUP_NEXT_INDIRECT] = "ip6-indirect",			\
     [IP_LOOKUP_NEXT_ICMP_ERROR] = "ip6-icmp-error",		\
+    [IP_LOOKUP_NEXT_FIP64] = "ip6-fip64",			\
     [IP6_LOOKUP_NEXT_HOP_BY_HOP] = "ip6-hop-by-hop",		\
     [IP6_LOOKUP_NEXT_ADD_HOP_BY_HOP] = "ip6-add-hop-by-hop",	\
     [IP6_LOOKUP_NEXT_POP_HOP_BY_HOP] = "ip6-pop-hop-by-hop",	\
