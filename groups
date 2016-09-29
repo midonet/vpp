@@ -1,4 +1,7 @@
 # UUID                                  	Group Name
 #
-5f71730da8cb329240359ab027ed9ab8bae0e86d	midonet-core
+bd01d6c4810c435d7c8e7a4fd316dfdf93bccb0d	midonet
+bd7309f63eacce6d7d6540c367b126dd3115acac	midonet-bots
+global:Anonymous-Users                  	Anonymous Users
+global:Registered-Users                 	Registered Users
 user:mido-gerrithub-sync                	user/mido-gerrithub-sync
