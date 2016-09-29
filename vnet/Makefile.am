@@ -359,6 +359,15 @@ nobase_include_HEADERS +=                       \
  vnet/map/map.h
 
 ########################################
+# Layer 3 protocol: FIP64
+########################################
+libvnet_la_SOURCES +=                           \
+vnet/fip64/fip64.c
+
+nobase_include_HEADERS +=                       \
+vnet/fip64/fip64.h
+
+########################################
 # Tunnel protocol: gre
 ########################################
 libvnet_la_SOURCES +=				\
