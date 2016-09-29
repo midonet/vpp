@@ -353,7 +353,9 @@ libvnet_la_SOURCES +=                           \
  vnet/map/ip4_map.c                             \
  vnet/map/ip6_map.c                             \
  vnet/map/ip4_map_t.c                           \
- vnet/map/ip6_map_t.c
+ vnet/map/ip6_map_t.c                           \
+ vnet/map/fip64.c
+
 
 nobase_include_HEADERS +=                       \
  vnet/map/map.h
