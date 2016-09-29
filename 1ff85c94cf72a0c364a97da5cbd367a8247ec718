@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "baa041b7_859bf616",
+        "filename": ".gitreview",
+        "patchSetId": 1
+      },
+      "lineNbr": 4,
+      "author": {
+        "id": 1003318
+      },
+      "writtenOn": "2016-09-29T08:29:10Z",
+      "side": 1,
+      "message": "maybe we should have a default branch too pointing to ours",
+      "range": {
+        "startLine": 4,
+        "startChar": 23,
+        "endLine": 4,
+        "endChar": 23
+      },
+      "revId": "1ff85c94cf72a0c364a97da5cbd367a8247ec718",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
