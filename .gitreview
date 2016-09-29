@@ -1,5 +1,5 @@
 [gerrit]
-host=gerrit.fd.io
+host=review.gerrithub.io
 port=29418
-project=vpp
-defaultbranch=stable/1609
+project=midonet/vpp.git
+defaultbranch=v16.09-midonet
