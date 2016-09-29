@@ -453,6 +453,34 @@ map_pre_resolve (ip4_address_t * ip4, ip6_address_t * ip6)
 #endif
 
 static clib_error_t *
+fip64_fn (vlib_main_t * vm,
+	  unformat_input_t * input, vlib_cli_command_t * cmd)
+{
+  ip6_main_t *im6 = &ip6_main;
+  ip6_add_del_route_args_t args6;
+  ip_adjacency_t adj;
+
+  /* Init IP adjacency */
+  memset (&adj, 0, sizeof (adj));
+  adj.explicit_fib_index = ~0;
+  adj.lookup_next_index = IP_LOOKUP_NEXT_FIP64;
+
+  /* Create ip6 adjacency. */
+  memset (&args6, 0, sizeof (args6));
+  args6.table_index_or_table_id = 0;
+  args6.flags = IP6_ROUTE_FLAG_ADD;
+  args6.dst_address.as_u64[0] = htobe64(0x2001000000000000L);
+  args6.dst_address.as_u64[1] = 0;
+  args6.dst_address_length = 64;
+  args6.adj_index = ~0;
+  args6.add_adj = &adj;
+  args6.n_add_adj = 1;
+  ip6_add_del_route (im6, &args6);
+
+  return 0;
+}
+
+static clib_error_t *
 map_security_check_command_fn (vlib_main_t * vm,
 			       unformat_input_t * input,
 			       vlib_cli_command_t * cmd)
@@ -1962,6 +1990,13 @@ VLIB_CLI_COMMAND(show_map_stats_command, static) = {
 VLIB_CLI_COMMAND(show_map_fragments_command, static) = {
   .path = "show map fragments",
   .function = show_map_fragments_command_fn,
+};
+/* *INDENT-ON* */
+
+/* *INDENT-OFF* */
+VLIB_CLI_COMMAND(fip64_command, static) = {
+  .path = "fip64",
+  .function = fip64_fn,
 };
 /* *INDENT-ON* */
 

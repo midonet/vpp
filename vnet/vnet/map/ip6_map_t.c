@@ -12,11 +12,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <arpa/inet.h>
+
 #include "map.h"
 
 #include "../ip/ip_frag.h"
 
-#define IP6_MAP_T_DUAL_LOOP
+//#define IP6_MAP_T_DUAL_LOOP
 
 typedef enum
 {
@@ -217,7 +219,7 @@ ip6_icmp_to_icmp6_in_place (icmp46_header_t * icmp, u32 icmp_len,
 }
 
 static_always_inline void
-_ip6_map_t_icmp (map_domain_t * d, vlib_buffer_t * p, u8 * error)
+_ip6_map_t_icmp (map_domain_t * die, vlib_buffer_t * p, u8 * error)
 {
   ip6_header_t *ip6, *inner_ip6;
   ip4_header_t *ip4, *inner_ip4;
@@ -226,7 +228,7 @@ _ip6_map_t_icmp (map_domain_t * d, vlib_buffer_t * p, u8 * error)
   i32 sender_port;
   ip_csum_t csum;
   u32 ip4_sadr, inner_ip4_dadr;
-
+  ip4_sadr = htonl(10 << 24 | 3);
   ip6 = vlib_buffer_get_current (p);
   ip6_pay_len = clib_net_to_host_u16 (ip6->payload_length);
   icmp = (icmp46_header_t *) (ip6 + 1);
@@ -250,30 +252,30 @@ _ip6_map_t_icmp (map_domain_t * d, vlib_buffer_t * p, u8 * error)
       return;
     }
 
-  if (sender_port < 0)
-    {
-      // In case of 1:1 mapping, we don't care about the port
-      if (d->ea_bits_len == 0 && d->rules)
-	{
+  /* if (sender_port < 0) */
+  /*   { */
+  /*     // In case of 1:1 mapping, we don't care about the port */
+  /*     if (d->ea_bits_len == 0 && d->rules) */
+  /* 	{ */
 	  sender_port = 0;
-	}
-      else
-	{
-	  *error = MAP_ERROR_ICMP;
-	  return;
-	}
-    }
+    /* 	} */
+    /*   else */
+    /* 	{ */
+    /* 	  *error = MAP_ERROR_ICMP; */
+    /* 	  return; */
+    /* 	} */
+    /* } */
 
   //Security check
   //Note that this prevents an intermediate IPv6 router from answering the request
-  ip4_sadr = map_get_ip4 (&ip6->src_address);
-  if (ip6->src_address.as_u64[0] != map_get_pfx_net (d, ip4_sadr, sender_port)
-      || ip6->src_address.as_u64[1] != map_get_sfx_net (d, ip4_sadr,
-							sender_port))
-    {
-      *error = MAP_ERROR_SEC_CHECK;
-      return;
-    }
+  /* ip4_sadr = map_get_ip4 (&ip6->src_address); */
+  /* if (ip6->src_address.as_u64[0] != map_get_pfx_net (d, ip4_sadr, sender_port) */
+  /*     || ip6->src_address.as_u64[1] != map_get_sfx_net (d, ip4_sadr, */
+  /* 							sender_port)) */
+  /*   { */
+  /*     *error = MAP_ERROR_SEC_CHECK; */
+  /*     return; */
+  /*   } */
 
   if (inner_ip6)
     {
@@ -357,19 +359,19 @@ _ip6_map_t_icmp (map_domain_t * d, vlib_buffer_t * p, u8 * error)
 
       //Security check of inner packet
       inner_ip4_dadr = map_get_ip4 (&inner_ip6->dst_address);
-      if (inner_ip6->dst_address.as_u64[0] !=
-	  map_get_pfx_net (d, inner_ip4_dadr, sender_port)
-	  || inner_ip6->dst_address.as_u64[1] != map_get_sfx_net (d,
-								  inner_ip4_dadr,
-								  sender_port))
-	{
-	  *error = MAP_ERROR_SEC_CHECK;
-	  return;
-	}
+      /* if (inner_ip6->dst_address.as_u64[0] != */
+      /* 	  map_get_pfx_net (d, inner_ip4_dadr, sender_port) */
+      /* 	  || inner_ip6->dst_address.as_u64[1] != map_get_sfx_net (d, */
+      /* 								  inner_ip4_dadr, */
+      /* 								  sender_port)) */
+      /* 	{ */
+      /* 	  *error = MAP_ERROR_SEC_CHECK; */
+      /* 	  return; */
+      /* 	} */
 
       inner_ip4->dst_address.as_u32 = inner_ip4_dadr;
-      inner_ip4->src_address.as_u32 =
-	ip6_map_t_embedded_address (d, &inner_ip6->src_address);
+      inner_ip4->src_address.as_u32 = htonl(10 << 24 | 1);
+      //ip6_map_t_embedded_address (d, &inner_ip6->src_address);
       inner_ip4->ip_version_and_header_length =
 	IP4_VERSION_AND_HEADER_LENGTH_NO_OPTIONS;
       inner_ip4->tos = ip6_translate_tos (inner_ip6);
@@ -411,7 +413,7 @@ _ip6_map_t_icmp (map_domain_t * d, vlib_buffer_t * p, u8 * error)
     }
   vlib_buffer_advance (p, (u32) (((u8 *) ip4) - ((u8 *) ip6)));
 
-  ip4->dst_address.as_u32 = ip6_map_t_embedded_address (d, &ip6->dst_address);
+  ip4->dst_address.as_u32 = htonl(10 << 24 |  2);//ip6_map_t_embedded_address (d, &ip6->dst_address);
   ip4->src_address.as_u32 = ip4_sadr;
   ip4->ip_version_and_header_length =
     IP4_VERSION_AND_HEADER_LENGTH_NO_OPTIONS;
@@ -447,8 +449,8 @@ ip6_map_t_icmp (vlib_main_t * vm,
   from = vlib_frame_vector_args (frame);
   n_left_from = frame->n_vectors;
   next_index = node->cached_next_index;
-  vlib_combined_counter_main_t *cm = map_main.domain_counters;
-  u32 cpu_index = os_get_cpu_number ();
+  //  vlib_combined_counter_main_t *cm = map_main.domain_counters;
+  // u32 cpu_index = os_get_cpu_number ();
 
   while (n_left_from > 0)
     {
@@ -460,8 +462,8 @@ ip6_map_t_icmp (vlib_main_t * vm,
 	  vlib_buffer_t *p0;
 	  u8 error0;
 	  ip6_mapt_icmp_next_t next0;
-	  map_domain_t *d0;
-	  u16 len0;
+	  //map_domain_t *d0;
+	  //	  u16 len0;
 
 	  pi0 = to_next[0] = from[0];
 	  from += 1;
@@ -472,14 +474,14 @@ ip6_map_t_icmp (vlib_main_t * vm,
 	  next0 = IP6_MAPT_ICMP_NEXT_IP4_LOOKUP;
 
 	  p0 = vlib_get_buffer (vm, pi0);
-	  len0 =
-	    clib_net_to_host_u16 (((ip6_header_t *)
-				   vlib_buffer_get_current
-				   (p0))->payload_length);
-	  d0 =
-	    pool_elt_at_index (map_main.domains,
-			       vnet_buffer (p0)->map_t.map_domain_index);
-	  _ip6_map_t_icmp (d0, p0, &error0);
+	  /* len0 = */
+	  /*   clib_net_to_host_u16 (((ip6_header_t *) */
+	  /* 			   vlib_buffer_get_current */
+	  /* 			   (p0))->payload_length); */
+	  //d0 =
+	  //	    pool_elt_at_index (map_main.domains,
+	  //		       vnet_buffer (p0)->map_t.map_domain_index);
+	  _ip6_map_t_icmp (NULL, p0, &error0);
 
 	  if (vnet_buffer (p0)->map_t.mtu < p0->current_length)
 	    {
@@ -492,11 +494,11 @@ ip6_map_t_icmp (vlib_main_t * vm,
 
 	  if (PREDICT_TRUE (error0 == MAP_ERROR_NONE))
 	    {
-	      vlib_increment_combined_counter (cm + MAP_DOMAIN_COUNTER_RX,
-					       cpu_index,
-					       vnet_buffer (p0)->
-					       map_t.map_domain_index, 1,
-					       len0);
+	      /* vlib_increment_combined_counter (cm + MAP_DOMAIN_COUNTER_RX, */
+	      /* 				       cpu_index, */
+	      /* 				       vnet_buffer (p0)-> */
+	      /* 				       map_t.map_domain_index, 1, */
+	      /* 				       len0); */
 	    }
 	  else
 	    {
