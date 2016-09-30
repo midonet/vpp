@@ -20,6 +20,8 @@
 #include <vlib/vlib.h>
 
 typedef struct {
+  uword *ip6_ip4_hash; /* ip6 address to ip4 address map */
+  uword *ip4_ip6_hash; /* ip4 address to ip6 address map */
 } fip64_main_t;
 
 typedef enum
@@ -27,6 +29,12 @@ typedef enum
   FIP64_SENDER,
   FIP64_RECEIVER
 } fip64_dir_e;
+
+extern ip4_address_t *
+fip64_lookup_ip6_to_ip4(ip6_address_t * ip6);
+
+extern ip6_address_t *
+fip64_lookup_ip4_to_ip6(ip4_address_t * ip4);
 
 /*
  * MAP Error counters/messages
