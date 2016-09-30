@@ -86,6 +86,9 @@ typedef enum {
   /** This packet needs to go to MAP with Translation - RFC7599 */
   IP_LOOKUP_NEXT_MAP_T,
 
+  /** This packet needs to go to FIP64 */
+  IP_LOOKUP_NEXT_FIP64,
+
   /** This packets needs to go to indirect next hop */
   IP_LOOKUP_NEXT_INDIRECT,
 

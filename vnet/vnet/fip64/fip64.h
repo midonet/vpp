@@ -19,8 +19,23 @@
 #include <vlib/vlib.h>
 
 typedef struct {
-  
+    
 } fip64_main_t;
+
+/*
+static clib_error_t*
+fip64_add_mapping(ip6_address_t * ip6, ip4_address_t * ip4);
+
+static clib_error_t*
+fip64_delete_mapping(ip6_address_t * ip6);
+
+static clib_error_t*
+fip64_lookup_ip6_to_ip4(ip6_address_t * ip6, ip4_address_t * ip4_out);
+*/
+/*
+static clib_error_t* 
+fip64_lookup_ip4_to_ip6(ip4_address_t * ip4, ip6_address_t * ip6_out);
+*/
 
 /*≤
  * MAP Error counters/messages
