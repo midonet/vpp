@@ -46,4 +46,6 @@ typedef enum {
   FIP64_N_ERROR,
 } fip64_error_t;
 
-u64 fip64_error_counter_get(u32 node_index, fip64_error_t fip64_error);
+u8 *format_fip64_trace (u8 * s, va_list * args);
+
+extern vlib_node_registration_t ip4_fip64_node;
