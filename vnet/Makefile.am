@@ -362,7 +362,8 @@ nobase_include_HEADERS +=                       \
 # Layer 3 protocol: FIP64
 ########################################
 libvnet_la_SOURCES +=                           \
-vnet/fip64/fip64.c
+vnet/fip64/fip64.c                              \
+vnet/fip64/ip4_fip64.c
 
 nobase_include_HEADERS +=                       \
 vnet/fip64/fip64.h
