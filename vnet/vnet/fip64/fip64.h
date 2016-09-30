@@ -20,6 +20,19 @@
 #include <vlib/vlib.h>
 
 typedef struct {
+  ip6_address_t src;
+  ip6_address_t dst;
+} fip64_ip6_t;
+
+typedef struct {
+  ip4_address_t src;
+  ip4_address_t dst;
+} fip64_ip4_t;
+
+typedef struct {
+  uword *ip6_ip4_hash; /* ip6 (src,dst) address to ip4 (src,dst) address map */
+  uword *ip4_ip6_hash; /* ip4 (src,dst) address to ip6 (src,dst) address map */
+  // TODO: add maps for ref counting adjacencies added for dst_ip6 and src_ip4
 } fip64_main_t;
 
 typedef enum
@@ -27,6 +40,36 @@ typedef enum
   FIP64_SENDER,
   FIP64_RECEIVER
 } fip64_dir_e;
+
+/**
+ * Lookup IP4 (src,dst) addresses for a given IP6 (src,dst) addresses.
+ *
+ * The output parameters should be valid memory regions where this function
+ * will write the results.
+ *
+ * @param[in] ip6_src Reference to the source IP6 address.
+ * @param[in] ip6_dst Reference to the destination IP6 address.
+ * @param[out] ip4_src Pointer where to copy the source IP4 address.
+ * @param[out] ip4_dst Pointer where to copy the destination IP4 address.
+ */
+extern bool
+fip64_lookup_ip6_to_ip4(ip6_address_t * ip6_src, ip6_address_t * ip6_dst,
+                        ip4_address_t * ip4_src, ip4_address_t * ip4_dst);
+
+/**
+ * Lookup IP6 (src,dst) addresses for a given IP4 (src,dst) addresses.
+ *
+ * The output parameters should be valid memory regions where this function
+ * will write the results.
+ *
+ * @param[in] ip4_src Reference to the source IP4 address.
+ * @param[in] ip4_dst Reference to the destination IP4 address.
+ * @param[out] ip6_src Pointer where to copy the source IP6 address.
+ * @param[out] ip6_dst Pointer where to copy the destination IP6 address.
+ */
+extern bool
+fip64_lookup_ip4_to_ip6(ip4_address_t * ip4_src, ip4_address_t * ip4_dst,
+                        ip6_address_t * ip6_src, ip6_address_t * ip6_dst);
 
 /*
  * MAP Error counters/messages
