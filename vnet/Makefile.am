@@ -363,7 +363,8 @@ nobase_include_HEADERS +=                       \
 ########################################
 libvnet_la_SOURCES +=                           \
 vnet/fip64/fip64.c                              \
-vnet/fip64/ip4_fip64.c
+vnet/fip64/ip4_fip64.c                          \
+vnet/fip64/ip6_fip64.c
 
 nobase_include_HEADERS +=                       \
 vnet/fip64/fip64.h
