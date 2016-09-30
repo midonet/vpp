@@ -35,6 +35,7 @@ typedef enum
 /* Must be first. */                                    \
 _(NONE, "valid FIP64 packets")                          \
 _(BAD_PROTOCOL, "bad protocol")                         \
+_(SEC_CHECK, "security check failed")                   \
 _(ICMP, "unable to translate ICMP")                     \
 _(ICMP_RELAY, "unable to relay ICMP")                   \
 _(UNKNOWN, "unknown")                                   \
@@ -56,3 +57,6 @@ u8 *format_fip64_trace (u8 * s, va_list * args);
 
 extern vlib_node_registration_t ip4_fip64_node;
 extern vlib_node_registration_t ip4_fip64_icmp_node;
+
+extern vlib_node_registration_t ip6_fip64_node;
+extern vlib_node_registration_t ip6_fip64_icmp_node;
