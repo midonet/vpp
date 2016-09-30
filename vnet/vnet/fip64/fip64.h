@@ -51,3 +51,4 @@ u64 fip64_error_counter_get(u32 node_index, fip64_error_t fip64_error);
 
 extern vlib_node_registration_t ip4_fip64_node;
 extern vlib_node_registration_t ip6_fip64_node;
+extern vlib_node_registration_t ip6_fip64_icmp_node;
