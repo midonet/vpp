@@ -135,7 +135,7 @@ typedef enum {
     [IP_LOOKUP_NEXT_CLASSIFY] = "ip6-classify",			\
     [IP_LOOKUP_NEXT_MAP] = "ip6-map",				\
     [IP_LOOKUP_NEXT_MAP_T] = "ip6-map-t",			\
-    [IP_LOOKUP_NEXT_FIP64] = "ip4-drop",			\
+    [IP_LOOKUP_NEXT_FIP64] = "ip6-fip64",			\
     [IP_LOOKUP_NEXT_INDIRECT] = "ip6-indirect",			\
     [IP_LOOKUP_NEXT_ICMP_ERROR] = "ip6-icmp-error",		\
     [IP6_LOOKUP_NEXT_HOP_BY_HOP] = "ip6-hop-by-hop",		\
