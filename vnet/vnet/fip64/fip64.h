@@ -72,5 +72,11 @@ typedef struct {
 
 u8 *format_fip64_trace (u8 * s, va_list * args);
 
+#define u8_ptr_add(ptr, index) (((u8 *)ptr) + index)
+#define u16_net_add(u, val) clib_host_to_net_u16(clib_net_to_host_u16(u) + (val))
+#define frag_id_6to4(id) ((id) ^ ((id) >> 16))
+
 extern vlib_node_registration_t ip4_fip64_node;
+extern vlib_node_registration_t ip6_fip64_node;
 extern vlib_node_registration_t ip4_fip64_icmp_node;
+extern vlib_node_registration_t ip6_fip64_icmp_node;
