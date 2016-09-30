@@ -22,6 +22,12 @@
 typedef struct {
 } fip64_main_t;
 
+typedef enum
+{
+  FIP64_SENDER,
+  FIP64_RECEIVER
+} fip64_dir_e;
+
 /*
  * MAP Error counters/messages
  */
@@ -49,3 +55,4 @@ typedef enum {
 u8 *format_fip64_trace (u8 * s, va_list * args);
 
 extern vlib_node_registration_t ip4_fip64_node;
+extern vlib_node_registration_t ip4_fip64_icmp_node;
