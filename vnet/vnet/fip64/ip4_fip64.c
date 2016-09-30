@@ -16,12 +16,456 @@
 
 typedef enum
 {
-  IP4_FIP64_NEXT_MAPT_TCP_UDP,
-  IP4_FIP64_NEXT_MAPT_ICMP,
-  IP4_FIP64_NEXT_MAPT_FRAGMENTED,
+//  IP4_FIP64_NEXT_FIP64_TCP_UDP,
+  IP4_FIP64_NEXT_FIP64_ICMP,
+//  IP4_FIP64_NEXT_FIP64_FRAGMENTED,
   IP4_FIP64_NEXT_DROP,
   IP4_FIP64_N_NEXT
 } ip4_fip64_next_t;
+
+typedef enum
+{
+  IP4_FIP64_ICMP_NEXT_IP6_LOOKUP,
+//  IP4_FIP64_ICMP_NEXT_IP6_FRAG,
+  IP4_FIP64_ICMP_NEXT_DROP,
+  IP4_FIP64_ICMP_N_NEXT
+} ip4_fip64_icmp_next_t;
+
+/* Statelessly translates an ICMP packet into ICMPv6.
+ *
+ * Warning: The checksum will need to be recomputed.
+ *
+ */
+static_always_inline int
+ip4_icmp_to_icmp6_in_place (icmp46_header_t * icmp, u32 icmp_len,
+                            i32 * receiver_port, ip4_header_t ** inner_ip4)
+{
+  *inner_ip4 = NULL;
+  switch (icmp->type)
+  {
+    case ICMP4_echo_reply:
+      *receiver_port = ((u16 *) icmp)[2];
+      icmp->type = ICMP6_echo_reply;
+      break;
+    case ICMP4_echo_request:
+      *receiver_port = ((u16 *) icmp)[2];
+      icmp->type = ICMP6_echo_request;
+      break;
+      /*
+    case ICMP4_destination_unreachable:
+      *inner_ip4 = (ip4_header_t *) (((u8 *) icmp) + 8);
+      *receiver_port = ip4_get_port (*inner_ip4, FIP64_SENDER, icmp_len - 8);
+      
+      switch (icmp->code)
+    {
+      case ICMP4_destination_unreachable_destination_unreachable_net:	//0
+      case ICMP4_destination_unreachable_destination_unreachable_host:	//1
+        icmp->type = ICMP6_destination_unreachable;
+        icmp->code = ICMP6_destination_unreachable_no_route_to_destination;
+        break;
+      case ICMP4_destination_unreachable_protocol_unreachable:	//2
+        icmp->type = ICMP6_parameter_problem;
+        icmp->code = ICMP6_parameter_problem_unrecognized_next_header;
+        break;
+      case ICMP4_destination_unreachable_port_unreachable:	//3
+        icmp->type = ICMP6_destination_unreachable;
+        icmp->code = ICMP6_destination_unreachable_port_unreachable;
+        break;
+      case ICMP4_destination_unreachable_fragmentation_needed_and_dont_fragment_set:	//4
+        icmp->type =
+        ICMP6_packet_too_big;
+        icmp->code = 0;
+      {
+        u32 advertised_mtu = clib_net_to_host_u32 (*((u32 *) (icmp + 1)));
+        if (advertised_mtu)
+          advertised_mtu += 20;
+        else
+          advertised_mtu = 1000;	//FIXME ! (RFC 1191 - plateau value)
+        
+        //FIXME: = minimum(advertised MTU+20, MTU_of_IPv6_nexthop, (MTU_of_IPv4_nexthop)+20)
+        *((u32 *) (icmp + 1)) = clib_host_to_net_u32 (advertised_mtu);
+      }
+        break;
+        
+      case ICMP4_destination_unreachable_source_route_failed:	//5
+      case ICMP4_destination_unreachable_destination_network_unknown:	//6
+      case ICMP4_destination_unreachable_destination_host_unknown:	//7
+      case ICMP4_destination_unreachable_source_host_isolated:	//8
+      case ICMP4_destination_unreachable_network_unreachable_for_type_of_service:	//11
+      case ICMP4_destination_unreachable_host_unreachable_for_type_of_service:	//12
+        icmp->type =
+        ICMP6_destination_unreachable;
+        icmp->code = ICMP6_destination_unreachable_no_route_to_destination;
+        break;
+      case ICMP4_destination_unreachable_network_administratively_prohibited:	//9
+      case ICMP4_destination_unreachable_host_administratively_prohibited:	//10
+      case ICMP4_destination_unreachable_communication_administratively_prohibited:	//13
+      case ICMP4_destination_unreachable_precedence_cutoff_in_effect:	//15
+        icmp->type = ICMP6_destination_unreachable;
+        icmp->code =
+        ICMP6_destination_unreachable_destination_administratively_prohibited;
+        break;
+      case ICMP4_destination_unreachable_host_precedence_violation:	//14
+      default:
+        return -1;
+    }
+      break;*/
+      /*
+    case ICMP4_time_exceeded:	//11
+      *inner_ip4 = (ip4_header_t *) (((u8 *) icmp) + 8);
+      *receiver_port = ip4_get_port (*inner_ip4, FIP64_SENDER, icmp_len - 8);
+      icmp->type = ICMP6_time_exceeded;
+      //icmp->code = icmp->code //unchanged
+      break;
+      
+    case ICMP4_parameter_problem:
+      *inner_ip4 = (ip4_header_t *) (((u8 *) icmp) + 8);
+      *receiver_port = ip4_get_port (*inner_ip4, FIP64_SENDER, icmp_len - 8);
+      
+      switch (icmp->code)
+    {
+      case ICMP4_parameter_problem_pointer_indicates_error:
+      case ICMP4_parameter_problem_bad_length:
+        icmp->type = ICMP6_parameter_problem;
+        icmp->code = ICMP6_parameter_problem_erroneous_header_field;
+      {
+        u8 ptr =
+        icmp_to_icmp6_updater_pointer_table[*((u8 *) (icmp + 1))];
+        if (ptr == 0xff)
+          return -1;
+        
+        *((u32 *) (icmp + 1)) = clib_host_to_net_u32 (ptr);
+      }
+        break;
+      default:
+        //All other codes cause dropping the packet
+        return -1;
+    }
+      break;*/
+      
+    default:
+      //All other types cause dropping the packet
+      return -1;
+      break;
+  }
+  return 0;
+}
+
+static_always_inline void
+_ip4_fip64_icmp (vlib_buffer_t * p, u8 * error)
+{
+  ip4_header_t *ip4, *inner_ip4;
+  ip6_header_t *ip6;//, *inner_ip6;
+  u32 ip_len;
+  icmp46_header_t *icmp;
+  i32 recv_port;
+  ip_csum_t csum;
+  //u16 *inner_L4_checksum = 0;
+  //ip6_frag_hdr_t *inner_frag;
+  //u32 inner_frag_id;
+  //u32 inner_frag_offset;
+  //u8 inner_frag_more;
+  
+  ip4 = vlib_buffer_get_current (p);
+  ip_len = clib_net_to_host_u16 (ip4->length);
+  ASSERT (ip_len <= p->current_length);
+  
+  icmp = (icmp46_header_t *) (ip4 + 1);
+  if (ip4_icmp_to_icmp6_in_place (icmp, ip_len - sizeof (*ip4),
+                                  &recv_port, &inner_ip4))
+  {
+    *error = FIP64_ERROR_ICMP;
+    return;
+  }
+  
+  /*
+  if (recv_port < 0)
+  {
+    // In case of 1:1 mapping, we don't care about the port
+    if (d->ea_bits_len == 0 && d->rules)
+    {
+      recv_port = 0;
+    }
+    else
+    {
+      *error = MAP_ERROR_ICMP;
+      return;
+    }
+  }*/
+  
+  /*
+  if (inner_ip4)
+  {
+    //We have 2 headers to translate.
+    //We need to make some room in the middle of the packet
+    
+    if (PREDICT_FALSE (ip4_is_fragment (inner_ip4)))
+    {
+      //Here it starts getting really tricky
+      //We will add a fragmentation header in the inner packet
+      
+      if (!ip4_is_first_fragment (inner_ip4))
+      {
+        //For now we do not handle unless it is the first fragment
+        //Ideally we should handle the case as we are in slow path already
+        *error = MAP_ERROR_FRAGMENTED;
+        return;
+      }
+      
+      vlib_buffer_advance (p,
+                           -2 * (sizeof (*ip6) - sizeof (*ip4)) -
+                           sizeof (*inner_frag));
+      ip6 = vlib_buffer_get_current (p);
+      clib_memcpy (u8_ptr_add (ip6, sizeof (*ip6) - sizeof (*ip4)), ip4,
+                   20 + 8);
+      ip4 =
+      (ip4_header_t *) u8_ptr_add (ip6, sizeof (*ip6) - sizeof (*ip4));
+      icmp = (icmp46_header_t *) (ip4 + 1);
+      
+      inner_ip6 =
+      (ip6_header_t *) u8_ptr_add (inner_ip4,
+                                   sizeof (*ip4) - sizeof (*ip6) -
+                                   sizeof (*inner_frag));
+      inner_frag =
+      (ip6_frag_hdr_t *) u8_ptr_add (inner_ip6, sizeof (*inner_ip6));
+      ip6->payload_length =
+      u16_net_add (ip4->length,
+                   sizeof (*ip6) - 2 * sizeof (*ip4) +
+                   sizeof (*inner_frag));
+      inner_frag_id = frag_id_4to6 (inner_ip4->fragment_id);
+      inner_frag_offset = ip4_get_fragment_offset (inner_ip4);
+      inner_frag_more =
+      ! !(inner_ip4->flags_and_fragment_offset &
+          clib_net_to_host_u16 (IP4_HEADER_FLAG_MORE_FRAGMENTS));
+    }
+    else
+    {
+      vlib_buffer_advance (p, -2 * (sizeof (*ip6) - sizeof (*ip4)));
+      ip6 = vlib_buffer_get_current (p);
+      clib_memcpy (u8_ptr_add (ip6, sizeof (*ip6) - sizeof (*ip4)), ip4,
+                   20 + 8);
+      ip4 =
+      (ip4_header_t *) u8_ptr_add (ip6, sizeof (*ip6) - sizeof (*ip4));
+      icmp = (icmp46_header_t *) u8_ptr_add (ip4, sizeof (*ip4));
+      inner_ip6 =
+      (ip6_header_t *) u8_ptr_add (inner_ip4,
+                                   sizeof (*ip4) - sizeof (*ip6));
+      ip6->payload_length =
+      u16_net_add (ip4->length, sizeof (*ip6) - 2 * sizeof (*ip4));
+      inner_frag = NULL;
+    }
+    
+    if (PREDICT_TRUE (inner_ip4->protocol == IP_PROTOCOL_TCP))
+    {
+      inner_L4_checksum = &((tcp_header_t *) (inner_ip4 + 1))->checksum;
+      *inner_L4_checksum =
+      ip_csum_fold (ip_csum_sub_even
+                    (*inner_L4_checksum,
+                     *((u64 *) (&inner_ip4->src_address))));
+    }
+    else if (PREDICT_TRUE (inner_ip4->protocol == IP_PROTOCOL_UDP))
+    {
+      inner_L4_checksum = &((udp_header_t *) (inner_ip4 + 1))->checksum;
+      if (!*inner_L4_checksum)
+      {
+        //The inner packet was first translated, and therefore came from IPv6.
+        //As the packet was an IPv6 packet, the UDP checksum can't be NULL
+        *error = MAP_ERROR_ICMP;
+        return;
+      }
+      *inner_L4_checksum =
+      ip_csum_fold (ip_csum_sub_even
+                    (*inner_L4_checksum,
+                     *((u64 *) (&inner_ip4->src_address))));
+    }
+    else if (inner_ip4->protocol == IP_PROTOCOL_ICMP)
+    {
+      //We have an ICMP inside an ICMP
+      //It needs to be translated, but not for error ICMP messages
+      icmp46_header_t *inner_icmp = (icmp46_header_t *) (inner_ip4 + 1);
+      csum = inner_icmp->checksum;
+      //Only types ICMP4_echo_request and ICMP4_echo_reply are handled by ip4_icmp_to_icmp6_in_place
+      csum = ip_csum_sub_even (csum, *((u16 *) inner_icmp));
+      inner_icmp->type = (inner_icmp->type == ICMP4_echo_request) ?
+      ICMP6_echo_request : ICMP6_echo_reply;
+      csum = ip_csum_add_even (csum, *((u16 *) inner_icmp));
+      csum =
+      ip_csum_add_even (csum, clib_host_to_net_u16 (IP_PROTOCOL_ICMP6));
+      csum =
+      ip_csum_add_even (csum, inner_ip4->length - sizeof (*inner_ip4));
+      inner_icmp->checksum = ip_csum_fold (csum);
+      inner_L4_checksum = &inner_icmp->checksum;
+      inner_ip4->protocol = IP_PROTOCOL_ICMP6;
+    }
+    else
+    {
+      // To shut up Coverity
+      os_panic ();
+    }
+    
+    //FIXME: Security check with the port found in the inner packet
+    
+    csum = *inner_L4_checksum;	//Initial checksum of the inner L4 header
+    //FIXME: Shouldn't we remove ip addresses from there ?
+    
+    inner_ip6->ip_version_traffic_class_and_flow_label =
+    clib_host_to_net_u32 ((6 << 28) + (inner_ip4->tos << 20));
+    inner_ip6->payload_length =
+    u16_net_add (inner_ip4->length, -sizeof (*inner_ip4));
+    inner_ip6->hop_limit = inner_ip4->ttl;
+    inner_ip6->protocol = inner_ip4->protocol;
+    
+    //Note that the source address is within the domain
+    //while the destination address is the one outside the domain
+    ip4_map_t_embedded_address (d, &inner_ip6->dst_address,
+                                &inner_ip4->dst_address);
+    inner_ip6->src_address.as_u64[0] =
+    map_get_pfx_net (d, inner_ip4->src_address.as_u32, recv_port);
+    inner_ip6->src_address.as_u64[1] =
+    map_get_sfx_net (d, inner_ip4->src_address.as_u32, recv_port);
+    
+    if (PREDICT_FALSE (inner_frag != NULL))
+    {
+      inner_frag->next_hdr = inner_ip6->protocol;
+      inner_frag->identification = inner_frag_id;
+      inner_frag->rsv = 0;
+      inner_frag->fragment_offset_and_more =
+      ip6_frag_hdr_offset_and_more (inner_frag_offset, inner_frag_more);
+      inner_ip6->protocol = IP_PROTOCOL_IPV6_FRAGMENTATION;
+      inner_ip6->payload_length =
+      clib_host_to_net_u16 (clib_net_to_host_u16
+                            (inner_ip6->payload_length) +
+                            sizeof (*inner_frag));
+    }
+    
+    csum = ip_csum_add_even (csum, inner_ip6->src_address.as_u64[0]);
+    csum = ip_csum_add_even (csum, inner_ip6->src_address.as_u64[1]);
+    csum = ip_csum_add_even (csum, inner_ip6->dst_address.as_u64[0]);
+    csum = ip_csum_add_even (csum, inner_ip6->dst_address.as_u64[1]);
+    *inner_L4_checksum = ip_csum_fold (csum);
+    
+  }
+  else
+  {*/
+    vlib_buffer_advance (p, sizeof (*ip4) - sizeof (*ip6));
+    ip6 = vlib_buffer_get_current (p);
+    ip6->payload_length =
+    clib_host_to_net_u16 (clib_net_to_host_u16 (ip4->length) -
+                          sizeof (*ip4));
+  //}
+  
+  //Translate outer IPv6
+  ip6->ip_version_traffic_class_and_flow_label =
+  clib_host_to_net_u32 ((6 << 28) + (ip4->tos << 20));
+  
+  ip6->hop_limit = ip4->ttl;
+  ip6->protocol = IP_PROTOCOL_ICMP6;
+  
+//  ip4_map_t_embedded_address (d, &ip6->src_address, &ip4->src_address);
+
+  ip6->src_address.as_u64[0] = clib_host_to_net_u64(0x2001000000000000L);
+  ip6->src_address.as_u64[1] = clib_host_to_net_u64(0x2L);
+
+  ip6->dst_address.as_u64[0] = clib_host_to_net_u64(0x2001000000000000L);
+//  map_get_pfx_net (d, ip4->dst_address.as_u32, recv_port);
+  ip6->dst_address.as_u64[1] = clib_host_to_net_u64(1L);
+//  map_get_sfx_net (d, ip4->dst_address.as_u32, recv_port);
+  
+  //Truncate when the packet exceeds the minimal IPv6 MTU
+  if (p->current_length > 1280)
+  {
+    ip6->payload_length = clib_host_to_net_u16 (1280 - sizeof (*ip6));
+    p->current_length = 1280;	//Looks too simple to be correct...
+  }
+  
+  //TODO: We could do an easy diff-checksum for echo requests/replies
+  //Recompute ICMP checksum
+  icmp->checksum = 0;
+  csum = ip_csum_with_carry (0, ip6->payload_length);
+  csum = ip_csum_with_carry (csum, clib_host_to_net_u16 (ip6->protocol));
+  csum = ip_csum_with_carry (csum, ip6->src_address.as_u64[0]);
+  csum = ip_csum_with_carry (csum, ip6->src_address.as_u64[1]);
+  csum = ip_csum_with_carry (csum, ip6->dst_address.as_u64[0]);
+  csum = ip_csum_with_carry (csum, ip6->dst_address.as_u64[1]);
+  csum =
+  ip_incremental_checksum (csum, icmp,
+                           clib_net_to_host_u16 (ip6->payload_length));
+  icmp->checksum = ~ip_csum_fold (csum);
+}
+
+
+static uword
+ip4_fip64_icmp (vlib_main_t * vm,
+                vlib_node_runtime_t * node, vlib_frame_t * frame)
+{
+
+  u32 n_left_from, *from, next_index, *to_next, n_left_to_next;
+  vlib_node_runtime_t *error_node =
+  vlib_node_get_runtime (vm, ip4_fip64_icmp_node.index);
+  from = vlib_frame_vector_args (frame);
+  n_left_from = frame->n_vectors;
+  next_index = node->cached_next_index;
+  //vlib_combined_counter_main_t *cm = map_main.domain_counters;
+  //u32 cpu_index = os_get_cpu_number ();
+  
+  while (n_left_from > 0)
+  {
+    vlib_get_next_frame (vm, node, next_index, to_next, n_left_to_next);
+    
+    while (n_left_from > 0 && n_left_to_next > 0)
+    {
+      u32 pi0;
+      vlib_buffer_t *p0;
+      ip4_fip64_icmp_next_t next0;
+      u8 error0;
+      //u16 len0;
+      
+      next0 = IP4_FIP64_ICMP_NEXT_IP6_LOOKUP;
+      pi0 = to_next[0] = from[0];
+      from += 1;
+      n_left_from -= 1;
+      to_next += 1;
+      n_left_to_next -= 1;
+      error0 = FIP64_ERROR_NONE;
+      
+      p0 = vlib_get_buffer (vm, pi0);
+      // vlib_buffer_advance (p0, 16);	//The pseudo-header is not used
+      //len0 =
+      //clib_net_to_host_u16 (((ip4_header_t *)
+      //                       vlib_buffer_get_current (p0))->length);
+//      d0 =
+//      pool_elt_at_index (map_main.domains,
+//                         vnet_buffer (p0)->map_t.map_domain_index);
+      _ip4_fip64_icmp (p0, &error0);
+      
+/*      if (vnet_buffer (p0)->map_t.mtu < p0->current_length)
+      {
+        vnet_buffer (p0)->ip_frag.header_offset = 0;
+        vnet_buffer (p0)->ip_frag.mtu = vnet_buffer (p0)->map_t.mtu;
+        vnet_buffer (p0)->ip_frag.next_index = IP6_FRAG_NEXT_IP6_LOOKUP;
+        next0 = IP4_MAPT_ICMP_NEXT_IP6_FRAG;
+      }*/
+      if (PREDICT_TRUE (error0 == FIP64_ERROR_NONE))
+      {
+        /*vlib_increment_combined_counter (cm + MAP_DOMAIN_COUNTER_TX,
+                                         cpu_index,
+                                         vnet_buffer (p0)->map_t.
+                                         map_domain_index, 1, len0);*/
+      }
+      else
+      {
+        next0 = IP4_FIP64_ICMP_NEXT_DROP;
+      }
+      p0->error = error_node->errors[error0];
+      vlib_validate_buffer_enqueue_x1 (vm, node, next_index,
+                                       to_next, n_left_to_next, pi0,
+                                       next0);
+    }
+    vlib_put_next_frame (vm, node, next_index, n_left_to_next);
+  }
+  return frame->n_vectors;
+}
+
 
 static_always_inline void
 ip4_fip64_classify (vlib_buffer_t * p0, ip4_header_t * ip40,
@@ -62,7 +506,14 @@ ip4_fip64_classify (vlib_buffer_t * p0, ip4_header_t * ip40,
   {
     *error0 = FIP64_ERROR_BAD_PROTOCOL;
   }*/
-  *error0 = FIP64_ERROR_BAD_PROTOCOL;
+  if (ip40->protocol == IP_PROTOCOL_ICMP)
+  {
+    *next0 = IP4_FIP64_NEXT_FIP64_ICMP;
+  }
+  else
+  {
+    *error0 = FIP64_ERROR_BAD_PROTOCOL;
+  }
 }
 
 static uword
@@ -173,6 +624,26 @@ static char *fip64_error_strings[] = {
 };
 
 /* *INDENT-OFF* */
+VLIB_REGISTER_NODE(ip4_fip64_icmp_node) = {
+  .function = ip4_fip64_icmp,
+  .name = "ip4-fip64-icmp",
+  .vector_size = sizeof(u32),
+  .format_trace = format_fip64_trace,
+  .type = VLIB_NODE_TYPE_INTERNAL,
+  
+  .n_errors = FIP64_N_ERROR,
+  .error_strings = fip64_error_strings,
+  
+  .n_next_nodes = IP4_FIP64_ICMP_N_NEXT,
+  .next_nodes = {
+    [IP4_FIP64_ICMP_NEXT_IP6_LOOKUP] = "ip6-lookup",
+    //[IP4_FIP64_ICMP_NEXT_IP6_FRAG] = "ip6-frag",
+    [IP4_FIP64_ICMP_NEXT_DROP] = "error-drop",
+  },
+};
+/* *INDENT-ON* */
+
+/* *INDENT-OFF* */
 VLIB_REGISTER_NODE(ip4_fip64_node) = {
   .function = ip4_fip64,
   .name = "ip4-fip64",
@@ -185,9 +656,9 @@ VLIB_REGISTER_NODE(ip4_fip64_node) = {
   
   .n_next_nodes = IP4_FIP64_N_NEXT,
   .next_nodes = {
-    [IP4_FIP64_NEXT_MAPT_TCP_UDP] = "ip4-map-t-tcp-udp",
-    [IP4_FIP64_NEXT_MAPT_ICMP] = "ip4-map-t-icmp",
-    [IP4_FIP64_NEXT_MAPT_FRAGMENTED] = "ip4-map-t-fragmented",
+//    [IP4_FIP64_NEXT_MAPT_TCP_UDP] = "ip4-map-t-tcp-udp",
+    [IP4_FIP64_NEXT_FIP64_ICMP] = "ip4-fip64-icmp",
+//    [IP4_FIP64_NEXT_MAPT_FRAGMENTED] = "ip4-map-t-fragmented",
     [IP4_FIP64_NEXT_DROP] = "error-drop",
   },
 };
