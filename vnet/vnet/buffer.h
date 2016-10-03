@@ -328,6 +328,12 @@ typedef struct
       u16 overlay_afi;
     } lisp;
 
+    /* FIP64 */
+    struct
+    {
+      u16 checksum_offset;    //L4 checksum overall offset
+    } fip64;
+
     u32 unused[6];
   };
 } vnet_buffer_opaque_t;

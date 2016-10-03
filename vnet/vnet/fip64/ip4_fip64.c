@@ -21,9 +21,12 @@
 #define IP6_SRC_ADDRESS_HI 0x200F000000000000L
 #define IP6_SRC_ADDRESS_LO 1L
 
+#define frag_id_4to6(id) (id)
+
 typedef enum
 {
   IP4_FIP64_NEXT_FIP64_ICMP,
+  IP4_FIP64_NEXT_FIP64_TCP_UDP,
   IP4_FIP64_NEXT_DROP,
   IP4_FIP64_N_NEXT
 } ip4_fip64_next_t;
@@ -34,6 +37,14 @@ typedef enum
   IP4_FIP64_ICMP_NEXT_DROP,
   IP4_FIP64_ICMP_N_NEXT
 } ip4_fip64_icmp_next_t;
+
+typedef enum
+{
+  IP4_FIP64_TCP_UDP_NEXT_IP6_LOOKUP,
+  IP4_FIP64_TCP_UDP_NEXT_DROP,
+  IP4_FIP64_TCP_UDP_N_NEXT
+} ip4_fip64_tcp_udp_next_t;
+
 
 //TODO: Find the right place in memory for this.
 /* *INDENT-OFF* */
@@ -317,12 +328,147 @@ ip4_fip64_icmp (vlib_main_t * vm,
   return frame->n_vectors;
 }
 
+static uword
+ip4_fip64_tcp_udp (vlib_main_t * vm,
+                   vlib_node_runtime_t * node, vlib_frame_t * frame)
+{
+  u32 n_left_from, *from, next_index, *to_next, n_left_to_next;
+  from = vlib_frame_vector_args (frame);
+  n_left_from = frame->n_vectors;
+  next_index = node->cached_next_index;
+
+  while (n_left_from > 0)
+  {
+    vlib_get_next_frame (vm, node, next_index, to_next, n_left_to_next);
+
+    while (n_left_from > 0 && n_left_to_next > 0)
+    {
+      u32 pi0;
+      vlib_buffer_t *p0;
+      ip4_header_t *ip40;
+      ip6_header_t *ip60;
+      ip_csum_t csum0;
+      u16 *checksum0;
+      ip6_frag_hdr_t *frag0;
+      u32 frag_id0;
+      ip4_fip64_tcp_udp_next_t next0;
+
+      pi0 = to_next[0] = from[0];
+      from += 1;
+      n_left_from -= 1;
+      to_next += 1;
+      n_left_to_next -= 1;
+
+      next0 = IP4_FIP64_TCP_UDP_NEXT_IP6_LOOKUP;
+      p0 = vlib_get_buffer (vm, pi0);
+
+      //Accessing ip4 header
+      ip40 = vlib_buffer_get_current (p0);
+      checksum0 = (u16 *) u8_ptr_add (ip40,
+                                      vnet_buffer (p0)->map_t.checksum_offset);
+
+      //UDP checksum is optional over IPv4 but mandatory for IPv6
+      //We do not check udp->length sanity but use our safe computed value instead
+      if (PREDICT_FALSE (!*checksum0 && ip40->protocol == IP_PROTOCOL_UDP))
+      {
+        u16 udp_len = clib_host_to_net_u16 (ip40->length) - sizeof (*ip40);
+        udp_header_t *udp = (udp_header_t *) u8_ptr_add (ip40, sizeof (*ip40));
+        ip_csum_t csum;
+        csum = ip_incremental_checksum (0, udp, udp_len);
+        csum = ip_csum_with_carry (csum, clib_host_to_net_u16 (udp_len));
+        csum = ip_csum_with_carry (csum,
+                                   clib_host_to_net_u16 (IP_PROTOCOL_UDP));
+        csum = ip_csum_with_carry (csum, *((u64 *) (&ip40->src_address)));
+        *checksum0 = ~ip_csum_fold (csum);
+      }
+
+      csum0 = ip_csum_sub_even (*checksum0, ip40->src_address.as_u32);
+      csum0 = ip_csum_sub_even (csum0, ip40->dst_address.as_u32);
+
+      // Deal with fragmented packets
+      if (PREDICT_FALSE (ip40->flags_and_fragment_offset &
+                         clib_host_to_net_u16
+                         (IP4_HEADER_FLAG_MORE_FRAGMENTS)))
+      {
+        ip60 = (ip6_header_t *) u8_ptr_add (ip40,
+                                            sizeof (*ip40) - sizeof (*ip60) -
+                                            sizeof (*frag0));
+        frag0 = (ip6_frag_hdr_t *) u8_ptr_add (ip40,
+                                               sizeof (*ip40) -
+                                               sizeof (*frag0));
+        frag_id0 = frag_id_4to6 (ip40->fragment_id);
+        vlib_buffer_advance (p0,
+                             sizeof (*ip40) - sizeof (*ip60) - sizeof (*frag0));
+      }
+      else
+      {
+        ip60 =
+        (ip6_header_t *) (((u8 *) ip40) + sizeof (*ip40) -
+                          sizeof (*ip60));
+        vlib_buffer_advance (p0, sizeof (*ip40) - sizeof (*ip60));
+        frag0 = NULL;
+      }
+
+      ip60->ip_version_traffic_class_and_flow_label =
+      clib_host_to_net_u32 ((6 << 28) + (ip40->tos << 20));
+      ip60->payload_length = u16_net_add (ip40->length, -sizeof (*ip40));
+      ip60->hop_limit = ip40->ttl;
+      ip60->protocol = ip40->protocol;
+      
+      if (PREDICT_FALSE (frag0 != NULL))
+      {
+        frag0->next_hdr = ip60->protocol;
+        frag0->identification = frag_id0;
+        frag0->rsv = 0;
+        frag0->fragment_offset_and_more =
+          ip6_frag_hdr_offset_and_more (0, 1);
+        ip60->protocol = IP_PROTOCOL_IPV6_FRAGMENTATION;
+        ip60->payload_length =
+          u16_net_add (ip60->payload_length, sizeof (*frag0));
+      }
+      
+      //Finally copying the address
+      ip60->src_address.as_u64[0] = clib_host_to_net_u64(IP6_SRC_ADDRESS_HI);
+      ip60->src_address.as_u64[1] = clib_host_to_net_u64(IP6_SRC_ADDRESS_LO);
+      ip60->dst_address.as_u64[0] = clib_host_to_net_u64(IP6_DST_ADDRESS_HI);
+      ip60->dst_address.as_u64[1] = clib_host_to_net_u64(IP6_DST_ADDRESS_LO);
+      
+      csum0 = ip_csum_add_even (csum0, ip60->src_address.as_u64[0]);
+      csum0 = ip_csum_add_even (csum0, ip60->src_address.as_u64[1]);
+      csum0 = ip_csum_add_even (csum0, ip60->dst_address.as_u64[0]);
+      csum0 = ip_csum_add_even (csum0, ip60->dst_address.as_u64[1]);
+      *checksum0 = ip_csum_fold (csum0);
+      
+      vlib_validate_buffer_enqueue_x1 (vm, node, next_index,
+                                       to_next, n_left_to_next, pi0,
+                                       next0);
+    }
+    vlib_put_next_frame (vm, node, next_index, n_left_to_next);
+  }
+  
+  return frame->n_vectors;
+}
+
 static_always_inline void
 ip4_fip64_classify (vlib_buffer_t * p0, ip4_header_t * ip40,
                     u16 ip4_len0, i32 * dst_port0,
                     u8 * error0, ip4_fip64_next_t * next0)
 {
-  if (ip40->protocol == IP_PROTOCOL_ICMP)
+  if (PREDICT_TRUE (ip40->protocol == IP_PROTOCOL_TCP))
+  {
+    vnet_buffer (p0)->fip64.checksum_offset = 36;
+    *next0 = IP4_FIP64_NEXT_FIP64_TCP_UDP;
+    *error0 = ip4_len0 < 40 ? FIP64_ERROR_MALFORMED : *error0;
+    *dst_port0 = (i32) * ((u16 *) u8_ptr_add (ip40, sizeof (*ip40) + 2));
+  }
+  else if (PREDICT_TRUE (ip40->protocol == IP_PROTOCOL_UDP))
+  {
+    vnet_buffer (p0)->fip64.checksum_offset = 26;
+    *next0 = IP4_FIP64_NEXT_FIP64_TCP_UDP;
+    *error0 = ip4_len0 < 28 ? FIP64_ERROR_MALFORMED : *error0;
+    *dst_port0 = (i32) * ((u16 *) u8_ptr_add (ip40, sizeof (*ip40) + 2));
+  }
+  else if (ip40->protocol == IP_PROTOCOL_ICMP)
   {
     *next0 = IP4_FIP64_NEXT_FIP64_ICMP;
   }
@@ -394,6 +540,25 @@ static char *fip64_error_strings[] = {
 };
 
 /* *INDENT-OFF* */
+VLIB_REGISTER_NODE(ip4_fip64_tcp_udp_node) = {
+  .function = ip4_fip64_tcp_udp,
+  .name = "ip4-fip64-tcp-udp",
+  .vector_size = sizeof(u32),
+  .format_trace = format_fip64_trace,
+  .type = VLIB_NODE_TYPE_INTERNAL,
+
+  .n_errors = FIP64_N_ERROR,
+  .error_strings = fip64_error_strings,
+
+  .n_next_nodes = IP4_FIP64_TCP_UDP_N_NEXT,
+  .next_nodes = {
+    [IP4_FIP64_TCP_UDP_NEXT_IP6_LOOKUP] = "ip6-lookup",
+    [IP4_FIP64_TCP_UDP_NEXT_DROP] = "error-drop",
+  },
+};
+/* *INDENT-ON* */
+
+/* *INDENT-OFF* */
 VLIB_REGISTER_NODE(ip4_fip64_icmp_node) = {
   .function = ip4_fip64_icmp,
   .name = "ip4-fip64-icmp",
@@ -426,6 +591,7 @@ VLIB_REGISTER_NODE(ip4_fip64_node) = {
   .n_next_nodes = IP4_FIP64_N_NEXT,
   .next_nodes = {
     [IP4_FIP64_NEXT_FIP64_ICMP] = "ip4-fip64-icmp",
+    [IP4_FIP64_NEXT_FIP64_TCP_UDP] = "ip4-fip64-tcp-udp",
     [IP4_FIP64_NEXT_DROP] = "error-drop",
   },
 };

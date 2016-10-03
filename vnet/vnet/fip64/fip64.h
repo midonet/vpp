@@ -45,6 +45,9 @@ _(FRAGMENT_DROPPED, "dropped cached fragment")          \
 _(MALFORMED, "malformed packet")                        \
 _(DF_SET, "can't fragment, DF set")
 
+#define u8_ptr_add(ptr, index) (((u8 *)ptr) + index)
+#define u16_net_add(u, val) clib_host_to_net_u16(clib_net_to_host_u16(u) + (val))
+
 typedef enum {
 #define _(sym,str) FIP64_ERROR_##sym,
   foreach_fip64_error
@@ -56,3 +59,4 @@ u8 *format_fip64_trace (u8 * s, va_list * args);
 
 extern vlib_node_registration_t ip4_fip64_node;
 extern vlib_node_registration_t ip4_fip64_icmp_node;
+extern vlib_node_registration_t ip4_fip64_tcp_udp_node;
