@@ -358,7 +358,10 @@ ip6_icmp_to_icmp6_in_place (icmp46_header_t * icmp, u32 icmp_len,
 }
 
 static_always_inline void
-_ip6_fip64_icmp (vlib_buffer_t * p, u8 * error)
+_ip6_fip64_icmp (vlib_main_t *vm,
+                 vlib_node_runtime_t *node,
+                 vlib_buffer_t * p,
+                 u8 * error)
 {
   ip6_header_t *ip6, *inner_ip6;
   ip4_header_t *ip4, *inner_ip4;
@@ -389,6 +392,14 @@ _ip6_fip64_icmp (vlib_buffer_t * p, u8 * error)
       //TODO: In case of 1:1 mapping it is not necessary to have the sender port
       *error = FIP64_ERROR_ICMP;
       return;
+    }
+
+  fip64_trace_t *trace = NULL;
+  if (PREDICT_FALSE (p->flags & VLIB_BUFFER_IS_TRACED) )
+    {
+      trace = vlib_add_trace(vm, node, p, sizeof(*trace));
+      trace->ip6.src_address = ip6->src_address;
+      trace->ip6.dst_address = ip6->dst_address;
     }
 
   // MIDOTODO: check port
@@ -536,6 +547,12 @@ _ip6_fip64_icmp (vlib_buffer_t * p, u8 * error)
 						       sizeof (*ip6)));
   ip4->checksum = ip4_header_checksum (ip4);
 
+  if (PREDICT_FALSE (trace != NULL))
+    {
+      trace->ip4.src_address = ip4->src_address;
+      trace->ip4.dst_address = ip4->dst_address;
+    }
+
   //TODO: We could do an easy diff-checksum for echo requests/replies
   //Recompute ICMP checksum
   icmp->checksum = 0;
@@ -579,7 +596,7 @@ ip6_fip64_icmp (vlib_main_t * vm,
 	  next0 = IP6_FIP64_ICMP_NEXT_IP4_LOOKUP;
 
 	  p0 = vlib_get_buffer (vm, pi0);
-	  _ip6_fip64_icmp (p0, &error0);
+	  _ip6_fip64_icmp (vm, node, p0, &error0);
 
 	  if (PREDICT_FALSE(error0 != FIP64_ERROR_NONE))
 	    {
