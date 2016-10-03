@@ -41,7 +41,29 @@ fip64_error_counter_get (u32 node_index, fip64_error_t fip64_error)
 u8 *
 format_fip64_trace (u8 * s, va_list * args)
 {
-  return (u8*) "FIP64 trace not available";
+  CLIB_UNUSED (vlib_main_t * vm) = va_arg (*args, vlib_main_t *);
+  CLIB_UNUSED (vlib_node_t * node) = va_arg (*args, vlib_node_t *);
+  fip64_trace_t *trace = va_arg(*args,  fip64_trace_t *);
+
+  if (trace->op ==  IP6_FIP64_TRACE)
+    {
+      s = format(s, "source: %U -> %U\n",
+              format_ip6_address, &trace->ip6.src_address,
+              format_ip4_address, trace->ip4.src_address.data);
+      s = format(s, "  dest:   %U -> %U",
+              format_ip6_address, &trace->ip6.dst_address,
+              format_ip4_address, trace->ip4.dst_address.data);
+    }
+  else
+    {
+      s = format(s, "source: %U -> %U\n",
+              format_ip4_address, trace->ip4.src_address.data,
+              format_ip6_address, &trace->ip6.src_address);
+      s = format(s, "  dest:   %U -> %U",
+              format_ip4_address, trace->ip4.dst_address.data,
+              format_ip6_address, &trace->ip6.dst_address);
+    }
+  return s;
 }
 
 /*
