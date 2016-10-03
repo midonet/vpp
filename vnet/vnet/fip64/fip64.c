@@ -15,7 +15,7 @@
 
 #include "fip64.h"
 
-#define IP4_NET_ADDRESS 0xA000000
+#define IP4_NET_ADDRESS 0x64000000
 #define IP4_NET_PREFIX 24
 
 u64

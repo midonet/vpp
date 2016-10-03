@@ -15,6 +15,12 @@
 
 #include "fip64.h"
 
+#define IP6_DST_ADDRESS_HI 0x2001000000000000L
+#define IP6_DST_ADDRESS_LO 1L
+
+#define IP6_SRC_ADDRESS_HI 0x200F000000000000L
+#define IP6_SRC_ADDRESS_LO 1L
+
 typedef enum
 {
   IP4_FIP64_NEXT_FIP64_ICMP,
@@ -92,11 +98,11 @@ _ip4_fip64_icmp (vlib_buffer_t * p, u8 * error)
   ip6->hop_limit = ip4->ttl;
   ip6->protocol = IP_PROTOCOL_ICMP6;
 
-  ip6->src_address.as_u64[0] = clib_host_to_net_u64(0x2001000000000000L);
-  ip6->src_address.as_u64[1] = clib_host_to_net_u64(0x2L);
+  ip6->src_address.as_u64[0] = clib_host_to_net_u64(IP6_SRC_ADDRESS_HI);
+  ip6->src_address.as_u64[1] = clib_host_to_net_u64(IP6_SRC_ADDRESS_LO);
 
-  ip6->dst_address.as_u64[0] = clib_host_to_net_u64(0x2001000000000000L);
-  ip6->dst_address.as_u64[1] = clib_host_to_net_u64(1L);
+  ip6->dst_address.as_u64[0] = clib_host_to_net_u64(IP6_DST_ADDRESS_HI);
+  ip6->dst_address.as_u64[1] = clib_host_to_net_u64(IP6_DST_ADDRESS_LO);
 
   //Truncate when the packet exceeds the minimal IPv6 MTU
   if (p->current_length > 1280)
