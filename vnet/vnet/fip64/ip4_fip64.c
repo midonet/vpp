@@ -35,6 +35,60 @@ typedef enum
   IP4_FIP64_ICMP_N_NEXT
 } ip4_fip64_icmp_next_t;
 
+//TODO: Find the right place in memory for this.
+/* *INDENT-OFF* */
+static u8 icmp_to_icmp6_updater_pointer_table[] =
+{ 0, 1, 4, 4, ~0,
+  ~0, ~0, ~0, 7, 6,
+  ~0, ~0, 8, 8, 8,
+  8, 24, 24, 24, 24
+};
+/* *INDENT-ON* */
+
+static i32
+ip4_get_port (ip4_header_t * ip, fip64_dir_e dir, u16 buffer_len)
+{
+  //TODO: use buffer length
+  if (ip->ip_version_and_header_length != 0x45 ||
+      ip4_get_fragment_offset (ip))
+    return -1;
+
+  if (PREDICT_TRUE ((ip->protocol == IP_PROTOCOL_TCP) ||
+                    (ip->protocol == IP_PROTOCOL_UDP)))
+  {
+    udp_header_t *udp = (void *) (ip + 1);
+    return (dir == FIP64_SENDER) ? udp->src_port : udp->dst_port;
+  }
+  else if (ip->protocol == IP_PROTOCOL_ICMP)
+  {
+    icmp46_header_t *icmp = (void *) (ip + 1);
+    if (icmp->type == ICMP4_echo_request || icmp->type == ICMP4_echo_reply)
+    {
+      return *((u16 *) (icmp + 1));
+    }
+    else if (clib_net_to_host_u16 (ip->length) >= 64)
+    {
+      ip = (ip4_header_t *) (icmp + 2);
+      if (PREDICT_TRUE ((ip->protocol == IP_PROTOCOL_TCP) ||
+                        (ip->protocol == IP_PROTOCOL_UDP)))
+      {
+        udp_header_t *udp = (void *) (ip + 1);
+        return (dir == FIP64_SENDER) ? udp->dst_port : udp->src_port;
+      }
+      else if (ip->protocol == IP_PROTOCOL_ICMP)
+      {
+        icmp46_header_t *icmp = (void *) (ip + 1);
+        if (icmp->type == ICMP4_echo_request ||
+            icmp->type == ICMP4_echo_reply)
+        {
+          return *((u16 *) (icmp + 1));
+        }
+      }
+    }
+  }
+  return -1;
+}
+
 /* 
  * Statelessly translates an ICMP packet into ICMPv6.
  *
@@ -54,6 +108,96 @@ ip4_icmp_to_icmp6_in_place (icmp46_header_t * icmp, u32 icmp_len,
     case ICMP4_echo_request:
       *receiver_port = ((u16 *) icmp)[2];
       icmp->type = ICMP6_echo_request;
+      break;
+    case ICMP4_destination_unreachable:
+      *inner_ip4 = (ip4_header_t *) (((u8 *) icmp) + 8);
+      *receiver_port = ip4_get_port (*inner_ip4, FIP64_SENDER, icmp_len - 8);
+
+      switch (icmp->code)
+      {
+      case ICMP4_destination_unreachable_destination_unreachable_net: //0
+      case ICMP4_destination_unreachable_destination_unreachable_host: //1
+        icmp->type = ICMP6_destination_unreachable;
+        icmp->code = ICMP6_destination_unreachable_no_route_to_destination;
+        break;
+      case ICMP4_destination_unreachable_protocol_unreachable: //2
+        icmp->type = ICMP6_parameter_problem;
+        icmp->code = ICMP6_parameter_problem_unrecognized_next_header;
+        break;
+      case ICMP4_destination_unreachable_port_unreachable: //3
+        icmp->type = ICMP6_destination_unreachable;
+        icmp->code = ICMP6_destination_unreachable_port_unreachable;
+        break;
+      case ICMP4_destination_unreachable_fragmentation_needed_and_dont_fragment_set: //4
+        icmp->type =
+        ICMP6_packet_too_big;
+        icmp->code = 0;
+        {
+        u32 advertised_mtu = clib_net_to_host_u32 (*((u32 *) (icmp + 1)));
+        if (advertised_mtu)
+          advertised_mtu += 20;
+        else
+          advertised_mtu = 1000; //FIXME ! (RFC 1191 - plateau value)
+
+        //FIXME: = minimum(advertised MTU+20, MTU_of_IPv6_nexthop, (MTU_of_IPv4_nexthop)+20)
+        *((u32 *) (icmp + 1)) = clib_host_to_net_u32 (advertised_mtu);
+        }
+        break;
+
+      case ICMP4_destination_unreachable_source_route_failed: //5
+      case ICMP4_destination_unreachable_destination_network_unknown: //6
+      case ICMP4_destination_unreachable_destination_host_unknown: //7
+      case ICMP4_destination_unreachable_source_host_isolated: //8
+      case ICMP4_destination_unreachable_network_unreachable_for_type_of_service: //11
+      case ICMP4_destination_unreachable_host_unreachable_for_type_of_service: //12
+        icmp->type =
+        ICMP6_destination_unreachable;
+        icmp->code = ICMP6_destination_unreachable_no_route_to_destination;
+        break;
+      case ICMP4_destination_unreachable_network_administratively_prohibited: //9
+      case ICMP4_destination_unreachable_host_administratively_prohibited: //10
+      case ICMP4_destination_unreachable_communication_administratively_prohibited: //13
+      case ICMP4_destination_unreachable_precedence_cutoff_in_effect: //15
+        icmp->type = ICMP6_destination_unreachable;
+        icmp->code =
+        ICMP6_destination_unreachable_destination_administratively_prohibited;
+        break;
+      case ICMP4_destination_unreachable_host_precedence_violation: //14
+      default:
+        return -1;
+      }
+      break;
+
+    case ICMP4_time_exceeded: //11
+      *inner_ip4 = (ip4_header_t *) (((u8 *) icmp) + 8);
+      *receiver_port = ip4_get_port (*inner_ip4, FIP64_SENDER, icmp_len - 8);
+      icmp->type = ICMP6_time_exceeded;
+      //icmp->code = icmp->code //unchanged
+      break;
+
+    case ICMP4_parameter_problem:
+      *inner_ip4 = (ip4_header_t *) (((u8 *) icmp) + 8);
+      *receiver_port = ip4_get_port (*inner_ip4, FIP64_SENDER, icmp_len - 8);
+
+      switch (icmp->code)
+      {
+      case ICMP4_parameter_problem_pointer_indicates_error:
+      case ICMP4_parameter_problem_bad_length:
+        icmp->type = ICMP6_parameter_problem;
+        icmp->code = ICMP6_parameter_problem_erroneous_header_field;
+        {
+          u8 ptr =
+            icmp_to_icmp6_updater_pointer_table[*((u8 *) (icmp + 1))];
+          if (ptr == 0xff)
+            return -1;
+        
+          *((u32 *) (icmp + 1)) = clib_host_to_net_u32 (ptr);
+        }
+        break;
+      default:
+        //All other codes cause dropping the packet
+        return -1;
+      }
       break;
     default:
       //All other types cause dropping the packet
