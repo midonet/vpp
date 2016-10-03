@@ -57,6 +57,24 @@ typedef enum {
   FIP64_N_ERROR,
 } fip64_error_t;
 
+typedef enum {
+  IP6_FIP64_TRACE,
+  IP4_FIP64_TRACE
+} fip64_trace_op_t;
+
+typedef struct {
+  fip64_trace_op_t op;
+  struct {
+    ip4_address_t src_address,
+                  dst_address;
+  } ip4;
+
+  struct {
+    ip6_address_t src_address,
+                  dst_address;
+  } ip6;
+} fip64_trace_t;
+
 u8 *format_fip64_trace (u8 * s, va_list * args);
 
 extern vlib_node_registration_t ip4_fip64_node;
