@@ -68,7 +68,7 @@ fip64_add_mapping(ip6_address_t * ip6, ip4_address_t * ip4)
 }
 
 clib_error_t *
-fip64_delete_mapping(ip6_address_t * ip6)
+fip64_del_mapping(ip6_address_t * ip6)
 {
   ip4_address_t * stored_ip4 = (ip4_address_t*) *hash_get_mem(ip6_ip4_hash, ip6);
   ip6_address_t * stored_ip6 = (ip6_address_t*) *hash_get_mem(ip4_ip6_hash, stored_ip4);
@@ -141,6 +141,37 @@ fip64_add_del_ip6_adjacency(ip6_address_t * ip6nh, u32 add_del_flag)
   ip6_add_del_route (im6, &args6);
 }
 
+/*
+ * Update a mapping:
+ *
+ *  - If old mapping to IP4 exists, deletes it (return non-zero)
+ *  - If new mapping is IP4 is given, add it
+ *
+ * Returns 0 if no old mapping is found
+ */
+static bool
+fip64_update_mapping(ip6_address_t * ip6nh, ip4_address_t * new_ip4nh)
+{
+  /* Remove old adjacency if it already exists */
+  ip4_address_t * old_ip4nh = fip64_lookup_ip6_to_ip4(ip6nh);
+  if (old_ip4nh)
+  {
+    fip64_add_del_ip6_adjacency(ip6nh, IP4_ROUTE_FLAG_DEL);
+    fip64_add_del_ip4_adjacency(old_ip4nh, IP4_ROUTE_FLAG_DEL);
+    fip64_del_mapping(ip6nh);
+  }
+
+  /* Add new mapping (if an IP 4 has been passed as argument) */
+  if(new_ip4nh)
+  {
+    fip64_add_del_ip6_adjacency(ip6nh, IP6_ROUTE_FLAG_ADD);
+    fip64_add_del_ip4_adjacency(new_ip4nh, IP4_ROUTE_FLAG_ADD);
+    fip64_add_mapping(ip6nh, new_ip4nh);
+  }
+
+  return old_ip4nh ? true : false;
+}
+
 static clib_error_t*
 fip64_add_command_fn (vlib_main_t * vm, unformat_input_t * input,
                       vlib_cli_command_t * cmd)
@@ -175,17 +206,8 @@ fip64_add_command_fn (vlib_main_t * vm, unformat_input_t * input,
     return clib_error_return (0, "must specify a valid ip6 and ip4 addresses");
   }
 
-  /* Remove ip4 adjacency if it already exists */
-  ip4_address_t * old_ip4 = fip64_lookup_ip6_to_ip4(ip6nh);
-  if (old_ip4)
-  {
-    fip64_add_del_ip4_adjacency(old_ip4, IP4_ROUTE_FLAG_DEL);
-  }
+  fip64_update_mapping(ip6nh, ip4nh);
 
-  /* Add the new mapping and adjacencies */
-  fip64_add_del_ip6_adjacency(ip6nh, IP6_ROUTE_FLAG_ADD);
-  fip64_add_del_ip4_adjacency(ip4nh, IP4_ROUTE_FLAG_ADD);
-  fip64_add_mapping(ip6nh, ip4nh);
   return 0;
 }
 
@@ -194,7 +216,6 @@ fip64_del_command_fn (vlib_main_t * vm, unformat_input_t * input,
                       vlib_cli_command_t * cmd)
 {
   unformat_input_t _line_input, *line_input = &_line_input;
-  ip4_address_t * ip4nh;
   ip6_address_t ip6nh_struct;
   ip6_address_t * ip6nh = &ip6nh_struct;
   u8 ip6 = 0;
@@ -219,14 +240,10 @@ fip64_del_command_fn (vlib_main_t * vm, unformat_input_t * input,
   if (!ip6)
     return clib_error_return (0, "must specify a valid ip6 address");
 
-  ip4nh = fip64_lookup_ip6_to_ip4(ip6nh);
-  if (!ip4nh) {
+  if (!fip64_update_mapping(ip6nh, 0)) {
     return clib_error_return (0, "does not exist the mapping from the ip6 address");
   }
 
-  fip64_add_del_ip6_adjacency(ip6nh, IP6_ROUTE_FLAG_DEL);
-  fip64_add_del_ip4_adjacency(ip4nh, IP4_ROUTE_FLAG_DEL);
-  fip64_delete_mapping(ip6nh);
   return 0;
 }
 
@@ -234,13 +251,22 @@ static clib_error_t*
 fip64_show_command_fn (vlib_main_t * vm, unformat_input_t * input,
                       vlib_cli_command_t * cmd)
 {
-  vlib_cli_output (vm, "FIP64 show command\n");
+  uword k, v;
+  hash_foreach(k, v, ip6_ip4_hash,                                            \
+    u8 * s = 0;                                                               \
+    ip6_address_t * ip6 = (ip6_address_t*) k;                                 \
+    ip4_address_t * ip4 = (ip4_address_t*) v;                                 \
+    s = format (s, "%U %U\n", format_ip6_address, ip6,                        \
+                              format_ip4_address, ip4);                       \
+    vlib_cli_output(vm, (char*) s);                                           \
+  );
   return 0;
 }
 
 /* *INDENT-OFF* */
 VLIB_CLI_COMMAND(fip64_show_command, static) = {
   .path = "fip64 show",
+  .short_help = "",
   .function = fip64_show_command_fn,
 };
 /* *INDENT-ON* */
