@@ -519,6 +519,17 @@ ip4_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
         next0 = IP4_FIP64_NEXT_DROP;
       }
 
+      if (PREDICT_FALSE ( (p0->flags & VLIB_BUFFER_IS_TRACED) ) )
+      {
+        fip64_trace_t *trace = vlib_add_trace(vm, node, p0, sizeof(*trace));
+        trace->op = IP4_FIP64_TRACE;
+        trace->ip6.src_address.as_u64[0] = clib_host_to_net_u64(IP6_SRC_ADDRESS_HI);
+        trace->ip6.src_address.as_u64[1] = clib_host_to_net_u64(IP6_SRC_ADDRESS_LO);
+        trace->ip6.dst_address.as_u64[0] = clib_host_to_net_u64(IP6_DST_ADDRESS_HI);
+        trace->ip6.dst_address.as_u64[1] = clib_host_to_net_u64(IP6_DST_ADDRESS_LO);
+        trace->ip4.src_address = ip40->src_address;
+        trace->ip4.dst_address = ip40->dst_address;
+      }
       dst_port0 = -1;
       ip4_fip64_classify (p0, ip40, ip4_len0, &dst_port0, &error0, &next0);
 
