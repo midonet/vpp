@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "baa041b7_739aed63",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 6
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 1002751
+      },
+      "writtenOn": "2016-10-04T08:12:38Z",
+      "side": 1,
+      "message": "to be consistent with other nodes, maybe you should add these to the fip64_main_t structure from fip64.h and then declare:\n\nfip64_main_t fip64_main;",
+      "range": {
+        "startLine": 22,
+        "startChar": 0,
+        "endLine": 23,
+        "endChar": 58
+      },
+      "revId": "4d6372247553e147e37e161ab00534c1cba165f1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_dda1caaa",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 6
+      },
+      "lineNbr": 248,
+      "author": {
+        "id": 1002751
+      },
+      "writtenOn": "2016-10-04T08:12:38Z",
+      "side": 1,
+      "message": "is this on purpose?",
+      "range": {
+        "startLine": 248,
+        "startChar": 2,
+        "endLine": 248,
+        "endChar": 3
+      },
+      "revId": "4d6372247553e147e37e161ab00534c1cba165f1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
