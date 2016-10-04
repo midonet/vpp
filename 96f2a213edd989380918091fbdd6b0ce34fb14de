@@ -73,6 +73,30 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_33aea52e",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 5
+      },
+      "lineNbr": 150,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2016-10-04T09:39:21Z",
+      "side": 1,
+      "message": "Apparently the map only accepts pointers as value (which is strange, as the size of the pointed data is requested)",
+      "parentUuid": "baa041b7_735b0d87",
+      "range": {
+        "startLine": 149,
+        "startChar": 2,
+        "endLine": 150,
+        "endChar": 59
+      },
+      "revId": "96f2a213edd989380918091fbdd6b0ce34fb14de",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_bd63a6b0",
         "filename": "vnet/vnet/fip64/fip64.c",
         "patchSetId": 5
