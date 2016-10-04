@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "baa041b7_2c288796",
+        "filename": "vnet/vnet/fip64/ip6_fip64.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 406,
+      "author": {
+        "id": 1002751
+      },
+      "writtenOn": "2016-10-04T15:11:38Z",
+      "side": 1,
+      "message": "is this here in order to skip tracing if the packet is dropped?",
+      "range": {
+        "startLine": 400,
+        "startChar": 0,
+        "endLine": 406,
+        "endChar": 5
+      },
+      "revId": "ac74d314836b580930a5cc9867a689b420ff43c3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
