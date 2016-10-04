@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_5327e911",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 6
+      },
+      "lineNbr": 23,
+      "author": {
+        "id": 1003318
+      },
+      "writtenOn": "2016-10-04T08:40:11Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_739aed63",
+      "range": {
+        "startLine": 22,
+        "startChar": 0,
+        "endLine": 23,
+        "endChar": 58
+      },
+      "revId": "4d6372247553e147e37e161ab00534c1cba165f1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_dda1caaa",
         "filename": "vnet/vnet/fip64/fip64.c",
         "patchSetId": 6
@@ -36,6 +60,30 @@
       "writtenOn": "2016-10-04T08:12:38Z",
       "side": 1,
       "message": "is this on purpose?",
+      "range": {
+        "startLine": 248,
+        "startChar": 2,
+        "endLine": 248,
+        "endChar": 3
+      },
+      "revId": "4d6372247553e147e37e161ab00534c1cba165f1",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_9308d181",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 6
+      },
+      "lineNbr": 248,
+      "author": {
+        "id": 1003318
+      },
+      "writtenOn": "2016-10-04T08:40:11Z",
+      "side": 1,
+      "message": "I saw it on another vpp command. Wasn\u0027t sure if there was some kind of convention. Removed.",
+      "parentUuid": "baa041b7_dda1caaa",
       "range": {
         "startLine": 248,
         "startChar": 2,
