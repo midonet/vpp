@@ -35,13 +35,6 @@ typedef enum
   IP6_FIP64_ICMP_N_NEXT
 } ip6_fip64_icmp_next_t;
 
-static_always_inline u32
-fip64_get_ip4 (ip6_address_t *addr)
-{
-  return clib_host_to_net_u32(clib_net_to_host_u64(addr->as_u64[1]) >> 16);
-}
-
-
 static_always_inline
 int ip6_parse(const ip6_header_t *ip6, u32 buff_len,
               u8 *l4_protocol, u16 *l4_offset, u16 *frag_hdr_offset)
@@ -94,23 +87,34 @@ ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
           p0 = vlib_get_buffer (vm, pi0);
           ip60 = vlib_buffer_get_current (p0);
 
-          vnet_buffer (p0)->map_t.v6.saddr = clib_host_to_net_u32(192 << 24 | 168 << 16 | 1 << 8 | 1);
-          vnet_buffer (p0)->map_t.v6.daddr = clib_host_to_net_u32(10 << 24 | 1);
+          ip6_header_t *ip6 = vlib_buffer_get_current (p0);
+          ip4_address_t src_mapping,
+                        dst_mapping;
+
+          if ( ! fip64_lookup_ip6_to_ip4(&ip6->src_address,
+                                         &ip6->dst_address,
+                                         &src_mapping,
+                                         &dst_mapping) )
+            {
+                /* if lookup fails, map to zero address */
+                src_mapping.data_u32 = dst_mapping.data_u32 = 0;
+            }
+
+          vnet_buffer (p0)->map_t.v6.saddr = src_mapping.as_u32;
+          vnet_buffer (p0)->map_t.v6.daddr = dst_mapping.as_u32;
           vnet_buffer (p0)->map_t.mtu = ~0;
 
-          fip64_trace_t *trace = NULL;
-          if (PREDICT_FALSE ( (p0->flags & VLIB_BUFFER_IS_TRACED) &&
-                            (vnet_buffer(p0)->map_t.v6.l4_protocol !=
-                              IP_PROTOCOL_ICMP6) ) )
+          if (PREDICT_FALSE ( p0->flags & VLIB_BUFFER_IS_TRACED ))
             {
-
-              ip6_header_t *ip6 = vlib_buffer_get_current (p0);
-              trace = vlib_add_trace(vm, node, p0, sizeof(*trace));
+              fip64_trace_t *trace = vlib_add_trace(vm,
+                                                    node,
+                                                    p0,
+                                                    sizeof(fip64_trace_t));
               trace->op = IP6_FIP64_TRACE;
               trace->ip6.src_address = ip6->src_address;
               trace->ip6.dst_address = ip6->dst_address;
-              trace->ip4.src_address.data_u32 = vnet_buffer (p0)->map_t.v6.saddr;
-              trace->ip4.dst_address.data_u32 = vnet_buffer (p0)->map_t.v6.daddr;
+              trace->ip4.src_address = src_mapping;
+              trace->ip4.dst_address = dst_mapping;
             }
 
           if (PREDICT_FALSE (ip6_parse (ip60, p0->current_length,
@@ -384,8 +388,6 @@ _ip6_fip64_icmp (vlib_main_t *vm,
   icmp46_header_t *icmp;
   i32 sender_port;
   ip_csum_t csum;
-  u32 ip4_sadr, inner_ip4_dadr;
-  ip4_sadr = vnet_buffer (p)->map_t.v6.saddr;
 
   ip6 = vlib_buffer_get_current (p);
   ip6_pay_len = clib_net_to_host_u16 (ip6->payload_length);
@@ -408,15 +410,6 @@ _ip6_fip64_icmp (vlib_main_t *vm,
       //TODO: In case of 1:1 mapping it is not necessary to have the sender port
       *error = FIP64_ERROR_ICMP;
       return;
-    }
-
-  fip64_trace_t *trace = NULL;
-  if (PREDICT_FALSE (p->flags & VLIB_BUFFER_IS_TRACED) )
-    {
-      trace = vlib_add_trace(vm, node, p, sizeof(*trace));
-      trace->op = IP6_FIP64_TRACE;
-      trace->ip6.src_address = ip6->src_address;
-      trace->ip6.dst_address = ip6->dst_address;
     }
 
   // MIDOTODO: check port
@@ -502,10 +495,8 @@ _ip6_fip64_icmp (vlib_main_t *vm,
 	  return;
 	}
 
-      inner_ip4_dadr = fip64_get_ip4 (&inner_ip6->dst_address);
-
-      inner_ip4->dst_address.as_u32 = inner_ip4_dadr;
-      inner_ip4->src_address.as_u32 = clib_host_to_net_u32(10 << 24 | 1);
+      inner_ip4->dst_address.as_u32 = vnet_buffer(p)->map_t.v6.daddr;
+      inner_ip4->src_address.as_u32 = vnet_buffer(p)->map_t.v6.saddr;
       //ip6_map_t_embedded_address (d, &inner_ip6->src_address);
       inner_ip4->ip_version_and_header_length =
 	IP4_VERSION_AND_HEADER_LENGTH_NO_OPTIONS;
@@ -548,8 +539,8 @@ _ip6_fip64_icmp (vlib_main_t *vm,
     }
   vlib_buffer_advance (p, (u32) (((u8 *) ip4) - ((u8 *) ip6)));
 
-  ip4->dst_address.as_u32 = clib_host_to_net_u32(10 << 24 |  1);//ip6_map_t_embedded_address (d, &ip6->dst_address);
-  ip4->src_address.as_u32 = ip4_sadr;
+  ip4->dst_address.as_u32 = vnet_buffer(p)->map_t.v6.daddr;
+  ip4->src_address.as_u32 = vnet_buffer(p)->map_t.v6.saddr;
   ip4->ip_version_and_header_length =
     IP4_VERSION_AND_HEADER_LENGTH_NO_OPTIONS;
   ip4->tos = ip6_translate_tos (ip6);
@@ -563,12 +554,6 @@ _ip6_fip64_icmp (vlib_main_t *vm,
 			      NULL) ? sizeof (*ip4) : (2 * sizeof (*ip4) -
 						       sizeof (*ip6)));
   ip4->checksum = ip4_header_checksum (ip4);
-
-  if (PREDICT_FALSE (trace != NULL))
-    {
-      trace->ip4.src_address = ip4->src_address;
-      trace->ip4.dst_address = ip4->dst_address;
-    }
 
   //TODO: We could do an easy diff-checksum for echo requests/replies
   //Recompute ICMP checksum
