@@ -22,6 +22,30 @@
       "revId": "9cfac69bfbb15f1339613b7f0666f15e8c482f24",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_756ace1b",
+        "filename": "vnet/vnet/fip64/ip6_fip64.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 100,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-10-05T08:52:41Z",
+      "side": 1,
+      "message": "Yes. We should extend fip64_trace_t with error conditions.",
+      "parentUuid": "baa041b7_b5e736e2",
+      "range": {
+        "startLine": 100,
+        "startChar": 16,
+        "endLine": 100,
+        "endChar": 64
+      },
+      "revId": "9cfac69bfbb15f1339613b7f0666f15e8c482f24",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
     }
   ]
 }
