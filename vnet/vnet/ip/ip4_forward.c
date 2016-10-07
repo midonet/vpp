@@ -3144,13 +3144,20 @@ add_del_interface_table (vlib_main_t * vm,
     }
 
   {
-    ip4_main_t * im = &ip4_main;
-    ip4_fib_t * fib = find_ip4_fib_by_table_index_or_id (im, table_id, IP4_ROUTE_FLAG_TABLE_ID);
+    ip4_main_t * ip4m = &ip4_main;
+    ip4_fib_t * ip4fib = find_ip4_fib_by_table_index_or_id (ip4m, table_id, IP4_ROUTE_FLAG_TABLE_ID);
 
-    if (fib) 
+    if (ip4fib) 
       {
-        vec_validate (im->fib_index_by_sw_if_index, sw_if_index);
-        im->fib_index_by_sw_if_index[sw_if_index] = fib->index;
+        vec_validate (ip4m->fib_index_by_sw_if_index, sw_if_index);
+        ip4m->fib_index_by_sw_if_index[sw_if_index] = ip4fib->index;
+    }
+    ip6_main_t * ip6m = &ip6_main;
+    ip6_fib_t * ip6fib = find_ip6_fib_by_table_index_or_id(ip6m, table_id, IP6_ROUTE_FLAG_TABLE_ID);
+    if (ip6fib) 
+      {
+        vec_validate (ip6m->fib_index_by_sw_if_index, sw_if_index);
+        ip6m->fib_index_by_sw_if_index[sw_if_index] = ip6fib->index;
     }
   }
 
