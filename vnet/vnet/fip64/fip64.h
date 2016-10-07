@@ -32,7 +32,8 @@ typedef struct {
 typedef struct {
   uword *ip6_ip4_hash; /* ip6 (src,dst) address to ip4 (src,dst) address map */
   uword *ip4_ip6_hash; /* ip4 (src,dst) address to ip6 (src,dst) address map */
-  // TODO: add maps for ref counting adjacencies added for dst_ip6 and src_ip4
+  uword *ip6_adj_refs; /* number of mappings that needs a given IP6 adjacency */
+  uword *ip4_adj_refs; /* number of mappings that needs a given IP4 adjacency */
 } fip64_main_t;
 
 typedef enum

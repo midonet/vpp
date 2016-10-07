@@ -26,6 +26,8 @@ fip64_init (vlib_main_t * vm)
 {
   fip64_main.ip6_ip4_hash = hash_create_mem(0, sizeof(fip64_ip6_t), sizeof(fip64_ip4_t));
   fip64_main.ip4_ip6_hash = hash_create_mem(0, sizeof(fip64_ip4_t), sizeof(fip64_ip6_t));
+  fip64_main.ip6_adj_refs = hash_create_mem(0, sizeof(ip6_address_t), sizeof(unsigned int));
+  fip64_main.ip6_adj_refs = hash_create_mem(0, sizeof(ip4_address_t), sizeof(unsigned int));
   return 0;
 }
 
@@ -140,7 +142,7 @@ fip64_lookup_ip4_to_ip6(ip4_address_t * ip4_src, ip4_address_t * ip4_dst,
   }
   else
     return false;
-}
+})
 
 static void
 fip64_add_del_ip4_adjacency(ip4_address_t * ip4nh, u32 add_del_flag)
@@ -164,6 +166,29 @@ fip64_add_del_ip4_adjacency(ip4_address_t * ip4nh, u32 add_del_flag)
   args4.add_adj = &adj;
   args4.n_add_adj = 1;
   ip4_add_del_route (im4, &args4);
+
+  uword * p = hash_get_mem(fip64_main.ip4_adj_refs, ip4nh);
+  // check if it's an add or a delete
+  if (add_del_flag == IP4_ROUTE_FLAG_ADD) {
+    if (p) (*p)++;
+    else 
+    {
+      unsigned int * refs;
+      clib_mem_alloc(refs);
+      *refs = 1;
+      hash_set_mem(fip64_main.ip4_adj_refs, ip4nh, refs);
+      ip4_add_del_route(im4, &args4);
+    }
+  } 
+  else // add_del_flag == IP4_ROUTE_FLAG_DEL
+  {
+    if (p && --(*p) == 0) 
+    {
+      hash_unset_mem(fip64_main.ip4_adj_refs, p);
+      clib_mem_free(p);
+      ip4_add_del_route(im4, &args4);
+    }
+  }
 }
 
 static void
