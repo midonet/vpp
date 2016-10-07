@@ -48,6 +48,52 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_58f5b680",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-10-07T13:13:00Z",
+      "side": 1,
+      "message": "Does this make the table_id parameter mandatory? I understand is optional but this code looks like it\u0027s going to fail if not present.",
+      "range": {
+        "startLine": 242,
+        "startChar": 9,
+        "endLine": 242,
+        "endChar": 59
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_38ee72b5",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 245,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-10-07T13:13:00Z",
+      "side": 1,
+      "message": "Update with table_id",
+      "range": {
+        "startLine": 245,
+        "startChar": 95,
+        "endLine": 245,
+        "endChar": 102
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_784bda2b",
         "filename": "vnet/vnet/fip64/fip64.c",
         "patchSetId": 1
@@ -168,6 +214,29 @@
       "writtenOn": "2016-10-07T12:49:15Z",
       "side": 1,
       "message": "Same here.",
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_58ced65a",
+        "filename": "vnet/vnet/fip64/fip64.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-10-07T13:13:00Z",
+      "side": 1,
+      "message": "can you reuse fip64_ip4_t ?",
+      "range": {
+        "startLine": 113,
+        "startChar": 2,
+        "endLine": 117,
+        "endChar": 8
+      },
       "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
       "unresolved": false
