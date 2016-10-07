@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "baa041b7_b8216251",
+        "filename": "vnet/vnet/fip64/ip4_fip64.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 256,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2016-10-07T12:49:15Z",
+      "side": 0,
+      "message": "If they are not used anymore, the hardcoded addresses should be removed.",
+      "range": {
+        "startLine": 256,
+        "startChar": 52,
+        "endLine": 256,
+        "endChar": 72
+      },
+      "revId": "3e3c849bb5ce778f75b89dc4141b0996e9057cc6",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}

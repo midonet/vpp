@@ -1,0 +1,262 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "baa041b7_b853a2dd",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2016-10-07T12:49:15Z",
+      "side": 1,
+      "message": "Nit",
+      "range": {
+        "startLine": 217,
+        "startChar": 68,
+        "endLine": 217,
+        "endChar": 69
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_784bda2b",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 248,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2016-10-07T12:49:15Z",
+      "side": 1,
+      "message": "Remove?",
+      "range": {
+        "startLine": 248,
+        "startChar": 0,
+        "endLine": 248,
+        "endChar": 81
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_b80a82cf",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 251,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2016-10-07T12:49:15Z",
+      "side": 1,
+      "message": "As I commented, I think it would be better to put the table_id in a separate argument out of the ip4 struct.",
+      "range": {
+        "startLine": 251,
+        "startChar": 0,
+        "endLine": 251,
+        "endChar": 35
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_38baf20b",
+        "filename": "vnet/vnet/fip64/fip64.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2016-10-07T12:49:15Z",
+      "side": 1,
+      "message": "Better not put too much info in the same structure or if not possible, change the name to something different to avoid missalignment between fip64_ip6_t and fip64_ip4_t",
+      "range": {
+        "startLine": 30,
+        "startChar": 0,
+        "endLine": 31,
+        "endChar": 25
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_b8c5e290",
+        "filename": "vnet/vnet/fip64/fip64.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2016-10-07T12:49:15Z",
+      "side": 1,
+      "message": "The doc has to be updated if parameters change",
+      "range": {
+        "startLine": 54,
+        "startChar": 0,
+        "endLine": 55,
+        "endChar": 72
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_f8812a4e",
+        "filename": "vnet/vnet/fip64/fip64.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2016-10-07T12:49:15Z",
+      "side": 1,
+      "message": "Better add the table_id as an extra parameter and create the struct inside the function, so the signature is more symetrical and easier to use.",
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_78963a95",
+        "filename": "vnet/vnet/fip64/fip64.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 73,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2016-10-07T12:49:15Z",
+      "side": 1,
+      "message": "Same here.",
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_98f33e09",
+        "filename": "vnet/vnet/fip64/fip64.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2016-10-07T12:49:15Z",
+      "side": 1,
+      "message": "Maybe use fip64_ip6_t? Not sure though.",
+      "range": {
+        "startLine": 128,
+        "startChar": 2,
+        "endLine": 129,
+        "endChar": 22
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_d8d78621",
+        "filename": "vnet/vnet/fip64/ip4_fip64.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 527,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2016-10-07T12:49:15Z",
+      "side": 1,
+      "message": "Remove or change to just TODO",
+      "range": {
+        "startLine": 527,
+        "startChar": 0,
+        "endLine": 527,
+        "endChar": 56
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_18c16e4e",
+        "filename": "vnet/vnet/fip64/ip6_fip64.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 94,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2016-10-07T12:49:15Z",
+      "side": 1,
+      "message": "by adding table_id as an extra output argument, the sw_if_index[VLIB_TX] pointer can be added directly here",
+      "range": {
+        "startLine": 94,
+        "startChar": 42,
+        "endLine": 94,
+        "endChar": 53
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_f8a00aa7",
+        "filename": "vnet/vnet/ip/ip4_forward.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 3150,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2016-10-07T12:49:15Z",
+      "side": 1,
+      "message": "Remove space",
+      "range": {
+        "startLine": 3150,
+        "startChar": 15,
+        "endLine": 3150,
+        "endChar": 16
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_d8a546b5",
+        "filename": "vnet/vnet/ip/ip4_forward.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 3157,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2016-10-07T12:49:15Z",
+      "side": 1,
+      "message": "Same",
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
