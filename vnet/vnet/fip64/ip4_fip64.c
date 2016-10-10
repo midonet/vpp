@@ -15,12 +15,6 @@
 
 #include "fip64.h"
 
-#define IP6_DST_ADDRESS_HI 0x2001000000000000L
-#define IP6_DST_ADDRESS_LO 1L
-
-#define IP6_SRC_ADDRESS_HI 0x200F000000000000L
-#define IP6_SRC_ADDRESS_LO 1L
-
 #define frag_id_4to6(id) (id)
 
 typedef enum
@@ -228,6 +222,10 @@ _ip4_fip64_icmp (vlib_buffer_t * p, u8 * error)
   i32 recv_port;
   ip_csum_t csum;
 
+  // skip hidden v6 addresses
+  ip4_mapt_pseudo_header_t *pheader = vlib_buffer_get_current (p);
+  vlib_buffer_advance (p, sizeof (*pheader));
+
   ip4 = vlib_buffer_get_current (p);
   ip_len = clib_net_to_host_u16 (ip4->length);
   ASSERT (ip_len <= p->current_length);
@@ -253,17 +251,14 @@ _ip4_fip64_icmp (vlib_buffer_t * p, u8 * error)
   ip6->hop_limit = ip4->ttl;
   ip6->protocol = IP_PROTOCOL_ICMP6;
 
-  ip6->src_address.as_u64[0] = clib_host_to_net_u64(IP6_SRC_ADDRESS_HI);
-  ip6->src_address.as_u64[1] = clib_host_to_net_u64(IP6_SRC_ADDRESS_LO);
-
-  ip6->dst_address.as_u64[0] = clib_host_to_net_u64(IP6_DST_ADDRESS_HI);
-  ip6->dst_address.as_u64[1] = clib_host_to_net_u64(IP6_DST_ADDRESS_LO);
+  ip6->src_address = pheader->saddr;
+  ip6->dst_address = pheader->daddr;
 
   //Truncate when the packet exceeds the minimal IPv6 MTU
   if (p->current_length > 1280)
   {
     ip6->payload_length = clib_host_to_net_u16 (1280 - sizeof (*ip6));
-    p->current_length = 1280;	//Looks too simple to be correct...
+    p->current_length = 1280;  //Looks too simple to be correct...
   }
 
   //TODO: We could do an easy diff-checksum for echo requests/replies
@@ -362,6 +357,9 @@ ip4_fip64_tcp_udp (vlib_main_t * vm,
       next0 = IP4_FIP64_TCP_UDP_NEXT_IP6_LOOKUP;
       p0 = vlib_get_buffer (vm, pi0);
 
+      ip4_mapt_pseudo_header_t *pheader = vlib_buffer_get_current (p0);
+      vlib_buffer_advance (p0, sizeof (*pheader));
+
       //Accessing ip4 header
       ip40 = vlib_buffer_get_current (p0);
       checksum0 = (u16 *) u8_ptr_add (ip40,
@@ -428,10 +426,8 @@ ip4_fip64_tcp_udp (vlib_main_t * vm,
       }
       
       //Finally copying the address
-      ip60->src_address.as_u64[0] = clib_host_to_net_u64(IP6_SRC_ADDRESS_HI);
-      ip60->src_address.as_u64[1] = clib_host_to_net_u64(IP6_SRC_ADDRESS_LO);
-      ip60->dst_address.as_u64[0] = clib_host_to_net_u64(IP6_DST_ADDRESS_HI);
-      ip60->dst_address.as_u64[1] = clib_host_to_net_u64(IP6_DST_ADDRESS_LO);
+      ip60->src_address = pheader->saddr;
+      ip60->dst_address = pheader->daddr;
       
       csum0 = ip_csum_add_even (csum0, ip60->src_address.as_u64[0]);
       csum0 = ip_csum_add_even (csum0, ip60->src_address.as_u64[1]);
@@ -501,6 +497,8 @@ ip4_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
       u16 ip4_len0;
       u8 error0;
       i32 dst_port0;
+      fip64_ip4_t ip4key;
+      bool lookup_success = false;
 
       pi0 = to_next[0] = from[0];
       from += 1;
@@ -510,25 +508,47 @@ ip4_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
       error0 = FIP64_ERROR_NONE;
 
       p0 = vlib_get_buffer (vm, pi0);
+
       ip40 = vlib_buffer_get_current (p0);
       ip4_len0 = clib_host_to_net_u16 (ip40->length);
-      if (PREDICT_FALSE (p0->current_length < ip4_len0 ||
-                         ip40->ip_version_and_header_length != 0x45))
+      if (PREDICT_FALSE (p0->current_length < ip4_len0
+                      || ip40->ip_version_and_header_length != 0x45))
       {
         error0 = FIP64_ERROR_UNKNOWN;
         next0 = IP4_FIP64_NEXT_DROP;
       }
+      // Send src and dst ip6 address to next nodes
+      vlib_buffer_advance (p0, -sizeof (ip4_mapt_pseudo_header_t));
+      ip4_mapt_pseudo_header_t *pheader0 = vlib_buffer_get_current(p0);
 
+      // Inverse order, since the key is defined by v6->v4 mapping
+      ip4key.dst_address = ip40->src_address;
+      ip4key.src_address = ip40->dst_address;
+
+      // Get VRF of the transmitting interface
+      u32 src_sw_if_index = vnet_buffer (p0)->sw_if_index[VLIB_RX];
+      u32 fib_index = vec_elt (ip4_main.fib_index_by_sw_if_index, src_sw_if_index);
+      ip4_fib_t * fib = vec_elt_at_index (ip4_main.fibs, fib_index);
+      ip4key.table_id = fib->table_id;
+
+      // Force ip6_lookup to look VRF 0
+      vnet_buffer (p0)->sw_if_index[VLIB_TX] = 0;
+      lookup_success = fip64_lookup_ip4_to_ip6(&ip4key, &pheader0->daddr,
+                                               &pheader0->saddr);
+      if (!lookup_success)
+      {
+        error0 = FIP64_ERROR_NO46MAP;
+        next0 = IP4_FIP64_NEXT_DROP;
+      }
       if (PREDICT_FALSE ( (p0->flags & VLIB_BUFFER_IS_TRACED) ) )
       {
         fip64_trace_t *trace = vlib_add_trace(vm, node, p0, sizeof(*trace));
         trace->op = IP4_FIP64_TRACE;
-        trace->ip6.src_address.as_u64[0] = clib_host_to_net_u64(IP6_SRC_ADDRESS_HI);
-        trace->ip6.src_address.as_u64[1] = clib_host_to_net_u64(IP6_SRC_ADDRESS_LO);
-        trace->ip6.dst_address.as_u64[0] = clib_host_to_net_u64(IP6_DST_ADDRESS_HI);
-        trace->ip6.dst_address.as_u64[1] = clib_host_to_net_u64(IP6_DST_ADDRESS_LO);
+        trace->ip6.src_address = pheader0->saddr;
+        trace->ip6.dst_address = pheader0->daddr;
         trace->ip4.src_address = ip40->src_address;
         trace->ip4.dst_address = ip40->dst_address;
+        trace->ip4.table_id = ip4key.table_id;
       }
       dst_port0 = -1;
       ip4_fip64_classify (p0, ip40, ip4_len0, &dst_port0, &error0, &next0);
