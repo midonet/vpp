@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_cd26a315",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 1
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-10T10:14:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_18bdeeb0",
+      "range": {
+        "startLine": 9,
+        "startChar": 71,
+        "endLine": 10,
+        "endChar": 33
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_b853a2dd",
         "filename": "vnet/vnet/fip64/fip64.c",
         "patchSetId": 1
@@ -36,6 +60,30 @@
       "writtenOn": "2016-10-07T12:49:15Z",
       "side": 1,
       "message": "Nit",
+      "range": {
+        "startLine": 217,
+        "startChar": 68,
+        "endLine": 217,
+        "endChar": 69
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_6dbd57b0",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 217,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-10T10:14:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_b853a2dd",
       "range": {
         "startLine": 217,
         "startChar": 68,
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_2de2afd5",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 242,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-10T10:14:32Z",
+      "side": 1,
+      "message": "Good catch, thank a lot. Check now!  :)",
+      "parentUuid": "baa041b7_58f5b680",
+      "range": {
+        "startLine": 242,
+        "startChar": 9,
+        "endLine": 242,
+        "endChar": 59
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_38ee72b5",
         "filename": "vnet/vnet/fip64/fip64.c",
         "patchSetId": 1
@@ -82,6 +154,30 @@
       "writtenOn": "2016-10-07T13:13:00Z",
       "side": 1,
       "message": "Update with table_id",
+      "range": {
+        "startLine": 245,
+        "startChar": 95,
+        "endLine": 245,
+        "endChar": 102
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_0de36bd9",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 245,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-10T10:14:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_38ee72b5",
       "range": {
         "startLine": 245,
         "startChar": 95,
@@ -117,6 +213,30 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_ede727e1",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 248,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-10T10:14:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_784bda2b",
+      "range": {
+        "startLine": 248,
+        "startChar": 0,
+        "endLine": 248,
+        "endChar": 81
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_b80a82cf",
         "filename": "vnet/vnet/fip64/fip64.c",
         "patchSetId": 1
@@ -128,6 +248,30 @@
       "writtenOn": "2016-10-07T12:49:15Z",
       "side": 1,
       "message": "As I commented, I think it would be better to put the table_id in a separate argument out of the ip4 struct.",
+      "range": {
+        "startLine": 251,
+        "startChar": 0,
+        "endLine": 251,
+        "endChar": 35
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_8dd77bed",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 251,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-10T10:14:32Z",
+      "side": 1,
+      "message": "Since all the usage cases of this struct always need all three fields I think it is a good idea to make table_id a part of the structure",
+      "parentUuid": "baa041b7_b80a82cf",
       "range": {
         "startLine": 251,
         "startChar": 0,
@@ -163,6 +307,30 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_cdf8e37e",
+        "filename": "vnet/vnet/fip64/fip64.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-10T10:14:32Z",
+      "side": 1,
+      "message": "We could rename these structures to something more meaningfull in a separate commit. Keep them as they are for now",
+      "parentUuid": "baa041b7_38baf20b",
+      "range": {
+        "startLine": 30,
+        "startChar": 0,
+        "endLine": 31,
+        "endChar": 25
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_b8c5e290",
         "filename": "vnet/vnet/fip64/fip64.h",
         "patchSetId": 1
@@ -186,6 +354,30 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_adf59f83",
+        "filename": "vnet/vnet/fip64/fip64.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 55,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-10T10:14:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_b8c5e290",
+      "range": {
+        "startLine": 54,
+        "startChar": 0,
+        "endLine": 55,
+        "endChar": 72
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_f8812a4e",
         "filename": "vnet/vnet/fip64/fip64.h",
         "patchSetId": 1
@@ -197,6 +389,24 @@
       "writtenOn": "2016-10-07T12:49:15Z",
       "side": 1,
       "message": "Better add the table_id as an extra parameter and create the struct inside the function, so the signature is more symetrical and easier to use.",
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_6deb17a5",
+        "filename": "vnet/vnet/fip64/fip64.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-10T10:14:32Z",
+      "side": 1,
+      "message": "See comments above",
+      "parentUuid": "baa041b7_f8812a4e",
       "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
       "unresolved": false
@@ -243,6 +453,30 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_0d312b59",
+        "filename": "vnet/vnet/fip64/fip64.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 117,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-10T10:14:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_58ced65a",
+      "range": {
+        "startLine": 113,
+        "startChar": 2,
+        "endLine": 117,
+        "endChar": 8
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_98f33e09",
         "filename": "vnet/vnet/fip64/fip64.h",
         "patchSetId": 1
@@ -254,6 +488,30 @@
       "writtenOn": "2016-10-07T12:49:15Z",
       "side": 1,
       "message": "Maybe use fip64_ip6_t? Not sure though.",
+      "range": {
+        "startLine": 128,
+        "startChar": 2,
+        "endLine": 129,
+        "endChar": 22
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_6d42f7ac",
+        "filename": "vnet/vnet/fip64/fip64.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-10T10:14:32Z",
+      "side": 1,
+      "message": "I am also not sure, leave it as it is for now, to make clear, that it is \"borrowed and replicated\" from VPP",
+      "parentUuid": "baa041b7_98f33e09",
       "range": {
         "startLine": 128,
         "startChar": 2,
@@ -289,6 +547,30 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_8d73fb15",
+        "filename": "vnet/vnet/fip64/ip4_fip64.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 507,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-10T10:14:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_129b8618",
+      "range": {
+        "startLine": 507,
+        "startChar": 10,
+        "endLine": 507,
+        "endChar": 17
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_d8d78621",
         "filename": "vnet/vnet/fip64/ip4_fip64.c",
         "patchSetId": 1
@@ -300,6 +582,30 @@
       "writtenOn": "2016-10-07T12:49:15Z",
       "side": 1,
       "message": "Remove or change to just TODO",
+      "range": {
+        "startLine": 527,
+        "startChar": 0,
+        "endLine": 527,
+        "endChar": 56
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_2d174fa4",
+        "filename": "vnet/vnet/fip64/ip4_fip64.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 527,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-10T10:14:32Z",
+      "side": 1,
+      "message": "MITODO allows us to separate our own todos from VPP own TODOs.",
+      "parentUuid": "baa041b7_d8d78621",
       "range": {
         "startLine": 527,
         "startChar": 0,
@@ -358,6 +664,30 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_0d080b7f",
+        "filename": "vnet/vnet/ip/ip4_forward.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 3150,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-10T10:14:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_f8a00aa7",
+      "range": {
+        "startLine": 3150,
+        "startChar": 15,
+        "endLine": 3150,
+        "endChar": 16
+      },
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_d8a546b5",
         "filename": "vnet/vnet/ip/ip4_forward.c",
         "patchSetId": 1
@@ -369,6 +699,24 @@
       "writtenOn": "2016-10-07T12:49:15Z",
       "side": 1,
       "message": "Same",
+      "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_ed0cc794",
+        "filename": "vnet/vnet/ip/ip4_forward.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 3157,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-10T10:14:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_d8a546b5",
       "revId": "3dbec49eb4103c9adcb93a227c3e4714ae484cb8",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
       "unresolved": false
