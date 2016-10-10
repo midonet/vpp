@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_ad235f04",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 202,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-10T10:14:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_4d8f3323",
+      "range": {
+        "startLine": 202,
+        "startChar": 72,
+        "endLine": 202,
+        "endChar": 73
+      },
+      "revId": "b150d5c6365ee1f61b8a871038f04f69829c0006",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_cdd103fd",
         "filename": "vnet/vnet/fip64/ip4_fip64.c",
         "patchSetId": 2
@@ -36,6 +60,30 @@
       "writtenOn": "2016-10-10T09:57:11Z",
       "side": 1,
       "message": "because the buffers are always created with \"headspace\". Im not sure how much, there\u0027s a define somewhere",
+      "range": {
+        "startLine": 521,
+        "startChar": 17,
+        "endLine": 521,
+        "endChar": 20
+      },
+      "revId": "b150d5c6365ee1f61b8a871038f04f69829c0006",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_6d70b708",
+        "filename": "vnet/vnet/fip64/ip4_fip64.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 521,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-10T10:14:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_cdd103fd",
       "range": {
         "startLine": 521,
         "startChar": 17,
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_4d605335",
+        "filename": "vnet/vnet/fip64/ip6_fip64.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 97,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-10T10:14:32Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_6dd437e8",
+      "range": {
+        "startLine": 97,
+        "startChar": 0,
+        "endLine": 97,
+        "endChar": 2
+      },
+      "revId": "b150d5c6365ee1f61b8a871038f04f69829c0006",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_4d2bb3eb",
         "filename": "vnet/vnet/fip64/ip6_fip64.c",
         "patchSetId": 2
@@ -82,6 +154,30 @@
       "writtenOn": "2016-10-10T09:57:11Z",
       "side": 1,
       "message": "https://en.wikipedia.org/wiki/Transmission_Control_Protocol\n\nlook at the packet diagram. It\u0027s correct.",
+      "range": {
+        "startLine": 158,
+        "startChar": 59,
+        "endLine": 158,
+        "endChar": 88
+      },
+      "revId": "b150d5c6365ee1f61b8a871038f04f69829c0006",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_2d650f44",
+        "filename": "vnet/vnet/fip64/ip6_fip64.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 158,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-10T10:14:32Z",
+      "side": 1,
+      "message": "Thanks!",
+      "parentUuid": "baa041b7_4d2bb3eb",
       "range": {
         "startLine": 158,
         "startChar": 59,
