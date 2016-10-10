@@ -1,0 +1,119 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "baa041b7_b8095b33",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 294,
+      "author": {
+        "id": 1002751
+      },
+      "writtenOn": "2016-10-10T14:37:05Z",
+      "side": 1,
+      "message": "remove spaces",
+      "range": {
+        "startLine": 294,
+        "startChar": 78,
+        "endLine": 294,
+        "endChar": 84
+      },
+      "revId": "5eb355e8cdca2096f287d09cc6c69a90eb015dde",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_9802170b",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 4
+      },
+      "lineNbr": 316,
+      "author": {
+        "id": 1002751
+      },
+      "writtenOn": "2016-10-10T14:37:05Z",
+      "side": 1,
+      "message": "add space",
+      "range": {
+        "startLine": 316,
+        "startChar": 76,
+        "endLine": 316,
+        "endChar": 77
+      },
+      "revId": "5eb355e8cdca2096f287d09cc6c69a90eb015dde",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_381d4b73",
+        "filename": "vnet/vnet/fip64/fip64.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 67,
+      "author": {
+        "id": 1002751
+      },
+      "writtenOn": "2016-10-10T14:37:05Z",
+      "side": 1,
+      "message": "destination",
+      "range": {
+        "startLine": 67,
+        "startChar": 43,
+        "endLine": 67,
+        "endChar": 55
+      },
+      "revId": "5eb355e8cdca2096f287d09cc6c69a90eb015dde",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_f8124360",
+        "filename": "vnet/vnet/fip64/fip64.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 113,
+      "author": {
+        "id": 1002751
+      },
+      "writtenOn": "2016-10-10T14:37:05Z",
+      "side": 1,
+      "message": "nit: no spaces",
+      "range": {
+        "startLine": 113,
+        "startChar": 13,
+        "endLine": 113,
+        "endChar": 18
+      },
+      "revId": "5eb355e8cdca2096f287d09cc6c69a90eb015dde",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_d80c1f44",
+        "filename": "vnet/vnet/fip64/fip64.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1002751
+      },
+      "writtenOn": "2016-10-10T14:37:05Z",
+      "side": 1,
+      "message": "maybe this should be fip64?",
+      "range": {
+        "startLine": 129,
+        "startChar": 7,
+        "endLine": 129,
+        "endChar": 11
+      },
+      "revId": "5eb355e8cdca2096f287d09cc6c69a90eb015dde",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
