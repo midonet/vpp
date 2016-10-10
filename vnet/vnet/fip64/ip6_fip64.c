@@ -88,20 +88,20 @@ ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
           ip60 = vlib_buffer_get_current (p0);
 
           ip6_header_t *ip6 = vlib_buffer_get_current (p0);
-          ip4_address_t src_mapping,
-                        dst_mapping;
-
+          fip64_ip4_t ip4_mapping;
           if ( ! fip64_lookup_ip6_to_ip4(&ip6->src_address,
                                          &ip6->dst_address,
-                                         &src_mapping,
-                                         &dst_mapping) )
-            {
-                /* if lookup fails, map to zero address */
-                src_mapping.data_u32 = dst_mapping.data_u32 = 0;
-            }
+                                         &ip4_mapping) )
+          {
+              /* if lookup fails, map to zero address */
+            memset(&ip4_mapping, 0, sizeof(ip4_mapping));
+          }
 
-          vnet_buffer (p0)->map_t.v6.saddr = src_mapping.as_u32;
-          vnet_buffer (p0)->map_t.v6.daddr = dst_mapping.as_u32;
+          // Send mapping to all fip64 specific nodes
+          vnet_buffer (p0)->map_t.v6.saddr = ip4_mapping.src_address.as_u32;
+          vnet_buffer (p0)->map_t.v6.daddr = ip4_mapping.dst_address.as_u32;
+          // To make ip4_lookup search the correct VRF
+          vnet_buffer (p0)->sw_if_index[VLIB_TX] = ip4_mapping.table_id;
           vnet_buffer (p0)->map_t.mtu = ~0;
 
           if (PREDICT_FALSE ( p0->flags & VLIB_BUFFER_IS_TRACED ))
@@ -113,8 +113,9 @@ ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
               trace->op = IP6_FIP64_TRACE;
               trace->ip6.src_address = ip6->src_address;
               trace->ip6.dst_address = ip6->dst_address;
-              trace->ip4.src_address = src_mapping;
-              trace->ip4.dst_address = dst_mapping;
+              trace->ip4.src_address = ip4_mapping.src_address;
+              trace->ip4.dst_address = ip4_mapping.dst_address;
+              trace->ip4.table_id = ip4_mapping.table_id;
             }
 
           if (PREDICT_FALSE (ip6_parse (ip60, p0->current_length,

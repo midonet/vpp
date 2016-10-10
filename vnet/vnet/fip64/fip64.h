@@ -20,13 +20,15 @@
 #include <vlib/vlib.h>
 
 typedef struct {
-  ip6_address_t src;
-  ip6_address_t dst;
+  ip6_address_t src_address;
+  ip6_address_t dst_address;
 } fip64_ip6_t;
 
 typedef struct {
-  ip4_address_t src;
-  ip4_address_t dst;
+  ip4_address_t src_address;
+  ip4_address_t dst_address;
+  // Id of the corresponding VRF table
+  u32 table_id;
 } fip64_ip4_t;
 
 typedef struct {
@@ -44,17 +46,17 @@ typedef enum
 /**
  * Lookup IP4 (src,dst) addresses for a given IP6 (src,dst) addresses.
  *
- * The output parameters should be valid memory regions where this function
+ * The output parameter should be valid memory regions where this function
  * will write the results.
  *
  * @param[in] ip6_src Reference to the source IP6 address.
  * @param[in] ip6_dst Reference to the destination IP6 address.
- * @param[out] ip4_src Pointer where to copy the source IP4 address.
- * @param[out] ip4_dst Pointer where to copy the destination IP4 address.
+ * @param[out] ip4 Pointer where to copy the source, destination IP4 addresses
+ *             and VRF table id for ip4 adjacency
  */
 extern bool
 fip64_lookup_ip6_to_ip4(ip6_address_t * ip6_src, ip6_address_t * ip6_dst,
-                        ip4_address_t * ip4_src, ip4_address_t * ip4_dst);
+                        fip64_ip4_t * ip4);
 
 /**
  * Lookup IP6 (src,dst) addresses for a given IP4 (src,dst) addresses.
@@ -62,13 +64,13 @@ fip64_lookup_ip6_to_ip4(ip6_address_t * ip6_src, ip6_address_t * ip6_dst,
  * The output parameters should be valid memory regions where this function
  * will write the results.
  *
- * @param[in] ip4_src Reference to the source IP4 address.
- * @param[in] ip4_dst Reference to the destination IP4 address.
+ * @param[in] ip4 Reference to the source, destination IP4 address and
+ *            VRF table id for the ip4 adjacency
  * @param[out] ip6_src Pointer where to copy the source IP6 address.
  * @param[out] ip6_dst Pointer where to copy the destination IP6 address.
  */
 extern bool
-fip64_lookup_ip4_to_ip6(ip4_address_t * ip4_src, ip4_address_t * ip4_dst,
+fip64_lookup_ip4_to_ip6(fip64_ip4_t * ip4,
                         ip6_address_t * ip6_src, ip6_address_t * ip6_dst);
 
 /*
@@ -83,11 +85,12 @@ _(ICMP, "unable to translate ICMP")                     \
 _(ICMP_RELAY, "unable to relay ICMP")                   \
 _(UNKNOWN, "unknown")                                   \
 _(FRAGMENTED, "packet is a fragment")                   \
-_(FRAGMENT_MEMORY, "could not cache fragment")	        \
+_(FRAGMENT_MEMORY, "could not cache fragment")          \
 _(FRAGMENT_MALFORMED, "fragment has unexpected format") \
 _(FRAGMENT_DROPPED, "dropped cached fragment")          \
 _(MALFORMED, "malformed packet")                        \
-_(DF_SET, "can't fragment, DF set")
+_(DF_SET, "can't fragment, DF set")                     \
+_(NO46MAP, "there is no mapping for v4->v6 path")
 
 #define u8_ptr_add(ptr, index) (((u8 *)ptr) + index)
 #define u16_net_add(u, val) clib_host_to_net_u16(clib_net_to_host_u16(u) + (val))
@@ -107,16 +110,23 @@ typedef enum {
 
 typedef struct {
   fip64_trace_op_t op;
-  struct {
-    ip4_address_t src_address,
-                  dst_address;
-  } ip4;
+  fip64_ip4_t ip4;
 
   struct {
     ip6_address_t src_address,
                   dst_address;
   } ip6;
 } fip64_trace_t;
+
+//This is used to pass information within the buffer data.
+//Buffer structure being too small to contain big structures like this.
+typedef CLIB_PACKED (struct {
+  ip6_address_t daddr;
+  ip6_address_t saddr;
+  //IPv6 header + Fragmentation header will be here
+  //sizeof(ip6) + sizeof(ip_frag) - sizeof(ip4)
+  u8 unused[28];
+}) ip4_fip64_pseudo_header_t;
 
 u8 *format_fip64_trace (u8 * s, va_list * args);
 
@@ -126,3 +136,4 @@ extern vlib_node_registration_t ip4_fip64_tcp_udp_node;
 
 extern vlib_node_registration_t ip6_fip64_node;
 extern vlib_node_registration_t ip6_fip64_icmp_node;
+extern ip4_main_t ip4_main;
