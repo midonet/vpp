@@ -61,18 +61,20 @@ format_fip64_trace (u8 * s, va_list * args)
       s = format(s, "source: %U -> %U\n",
               format_ip6_address, &trace->ip6.src_address,
               format_ip4_address, trace->ip4.src_address.data);
-      s = format(s, "  dest:   %U -> %U",
+      s = format(s, "    dest: %U -> %U\n",
               format_ip6_address, &trace->ip6.dst_address,
               format_ip4_address, trace->ip4.dst_address.data);
+      s = format(s, "table_id: %d", trace->ip4.table_id);
     }
   else
     {
       s = format(s, "source: %U -> %U\n",
               format_ip4_address, trace->ip4.src_address.data,
               format_ip6_address, &trace->ip6.src_address);
-      s = format(s, "  dest:   %U -> %U",
+      s = format(s, "    dest: %U -> %U\n",
               format_ip4_address, trace->ip4.dst_address.data,
               format_ip6_address, &trace->ip6.dst_address);
+      s = format(s, "table_id: %d", trace->ip4.table_id);
     }
   return s;
 }
@@ -106,44 +108,38 @@ fip64_del_mapping(fip64_ip6_t * ip6)
 
 bool
 fip64_lookup_ip6_to_ip4(ip6_address_t * ip6_src, ip6_address_t * ip6_dst,
-                        ip4_address_t * ip4_src, ip4_address_t * ip4_dst)
+                        fip64_ip4_t * ip4)
 {
   fip64_ip6_t ip6;
-  ip6.src = *ip6_src;
-  ip6.dst = *ip6_dst;
+  ip6.src_address = *ip6_src;
+  ip6.dst_address = *ip6_dst;
   uword * p = hash_get_mem(fip64_main.ip6_ip4_hash, &ip6);
   if (p)
   {
-    fip64_ip4_t * ip4 = (fip64_ip4_t *) *p;
-    *ip4_src = ip4->src;
-    *ip4_dst = ip4->dst;
+    fip64_ip4_t * ip4_from_hash = (fip64_ip4_t *) *p;
+    *ip4 = *ip4_from_hash;
     return true;
   }
-  else
-    return false;
+  return false;
 }
 
 bool
-fip64_lookup_ip4_to_ip6(ip4_address_t * ip4_src, ip4_address_t * ip4_dst,
+fip64_lookup_ip4_to_ip6(fip64_ip4_t * ip4,
                         ip6_address_t * ip6_src, ip6_address_t * ip6_dst)
 {
-  fip64_ip4_t ip4;
-  ip4.src = *ip4_src;
-  ip4.dst = *ip4_dst;
-  uword * p = hash_get_mem(fip64_main.ip4_ip6_hash, &ip4);
+  uword * p = hash_get_mem(fip64_main.ip4_ip6_hash, ip4);
   if (p)
   {
     fip64_ip6_t * ip6 = (fip64_ip6_t *) *p;
-    *ip6_src = ip6->src;
-    *ip6_dst = ip6->dst;
+    *ip6_src = ip6->src_address;
+    *ip6_dst = ip6->dst_address;
     return true;
   }
-  else
-    return false;
+  return false;
 }
 
 static void
-fip64_add_del_ip4_adjacency(ip4_address_t * ip4nh, u32 add_del_flag)
+fip64_add_del_ip4_adjacency(ip4_address_t * ip4nh, u32 add_del_flag, u32 table_id)
 {
   ip4_main_t *im4 = &ip4_main;
   ip4_add_del_route_args_t args4;
@@ -156,7 +152,7 @@ fip64_add_del_ip4_adjacency(ip4_address_t * ip4nh, u32 add_del_flag)
 
   // Create IPv4 adjancency.
   memset(&args4, 0, sizeof(args4));
-  args4.table_index_or_table_id = 0;
+  args4.table_index_or_table_id = table_id;
   args4.flags = add_del_flag;
   args4.dst_address = *ip4nh;
   args4.dst_address_length = 32;
@@ -203,22 +199,25 @@ fip64_update_mapping(fip64_ip6_t * ip6_input, fip64_ip4_t * ip4_input)
 {
   /* Remove old mapping and adjacencies if it already exists */
   fip64_ip4_t old_ip4;
-  bool exists_mapping = fip64_lookup_ip6_to_ip4(&ip6_input->src, &ip6_input->dst,
-                                                &old_ip4.src, &old_ip4.dst);
+  bool exists_mapping = fip64_lookup_ip6_to_ip4(&ip6_input->src_address,
+                                                &ip6_input->dst_address,
+                                                &old_ip4);
   if (exists_mapping)
   {
-    // TODO: handle reference counting for adjacencies
-    fip64_add_del_ip6_adjacency(&ip6_input->dst, IP4_ROUTE_FLAG_DEL);
-    fip64_add_del_ip4_adjacency(&old_ip4.src, IP4_ROUTE_FLAG_DEL);
+    // MITODO: handle reference counting for adjacencies
+    fip64_add_del_ip6_adjacency(&ip6_input->dst_address, IP4_ROUTE_FLAG_DEL);
+    fip64_add_del_ip4_adjacency(&old_ip4.src_address, IP4_ROUTE_FLAG_DEL,
+                                old_ip4.table_id);
     fip64_del_mapping(ip6_input);
   }
 
   /* Add new mapping and adjacency if ip4_input not null */
   if(ip4_input)
   {
-    // TODO: handle reference counting for adjacencies
-    fip64_add_del_ip6_adjacency(&ip6_input->dst, IP6_ROUTE_FLAG_ADD);
-    fip64_add_del_ip4_adjacency(&ip4_input->src, IP4_ROUTE_FLAG_ADD);
+    // MITODO: handle reference counting for adjacencies
+    fip64_add_del_ip6_adjacency(&ip6_input->dst_address, IP6_ROUTE_FLAG_ADD);
+    fip64_add_del_ip4_adjacency(&ip4_input->src_address, IP4_ROUTE_FLAG_ADD,
+                                ip4_input->table_id);
     fip64_add_mapping(ip6_input, ip4_input);
   }
 
@@ -232,22 +231,21 @@ fip64_add_command_fn (vlib_main_t * vm, unformat_input_t * input,
   unformat_input_t _line_input, *line_input = &_line_input;
   fip64_ip6_t ip6;
   fip64_ip4_t ip4;
-
+  ip4.table_id = 0;
   if (!unformat_user (input, unformat_line_input, line_input))
     return 0;
 
-  while (unformat_check_input (line_input) != UNFORMAT_END_OF_INPUT)
+  if (  !unformat (line_input, "%U", unformat_ip6_address, &ip6.src_address)
+     || !unformat (line_input, "%U", unformat_ip6_address, &ip6.dst_address)
+     || !unformat (line_input, "%U", unformat_ip4_address, &ip4.src_address)
+     || !unformat (line_input, "%U", unformat_ip4_address, &ip4.dst_address)
+     || (  unformat_check_input (line_input) != UNFORMAT_END_OF_INPUT
+        && !unformat (line_input, "table %d", &ip4.table_id) )
+     )
   {
-    if (  !unformat (line_input, "%U", unformat_ip6_address, &ip6.src)
-       || !unformat (line_input, "%U", unformat_ip6_address, &ip6.dst)
-       || !unformat (line_input, "%U", unformat_ip4_address, &ip4.src)
-       || !unformat (line_input, "%U", unformat_ip4_address, &ip4.dst))
-    {
-      unformat_free (line_input);
-      return clib_error_return (0, "invalid input: expected <src_ip6> <dst_ip6> <src_ip4> <dst_ip4>");
-    }
+    unformat_free (line_input);
+    return clib_error_return (0, "invalid input: expected <src_ip6> <dst_ip6> <src_ip4> <dst_ip4> [table <n>]");
   }
-  unformat_free (line_input);
 
   fip64_update_mapping(&ip6, &ip4);
   return 0;
@@ -265,8 +263,8 @@ fip64_del_command_fn (vlib_main_t * vm, unformat_input_t * input,
 
   while (unformat_check_input (line_input) != UNFORMAT_END_OF_INPUT)
   {
-      if (  !unformat (line_input, "%U", unformat_ip6_address, &ip6.src)
-         || !unformat (line_input, "%U", unformat_ip6_address, &ip6.dst))
+      if (  !unformat (line_input, "%U", unformat_ip6_address, &ip6.src_address)
+         || !unformat (line_input, "%U", unformat_ip6_address, &ip6.dst_address))
       {
         unformat_free (line_input);
         return clib_error_return (0, "invalid input: expected <src_ip6> <dst_ip6>");
@@ -285,36 +283,39 @@ static clib_error_t*
 fip64_show_command_fn (vlib_main_t * vm, unformat_input_t * input,
                       vlib_cli_command_t * cmd)
 {
-  vlib_cli_output (vm, "IP6 <-> IP4 mappings\n");
-  vlib_cli_output (vm, "%-40s%-40s%-16s%-16s\n",
-                   "SRC IP6", "DST IP6", "SRC IP4", "DST IP4");
+  vlib_cli_output (vm, "IP6 -> IP4 mappings\n");
+  vlib_cli_output (vm, "%-40s%-40s%-22s%-16s\n",
+                   "SRC IP6", "DST IP6", "SRC IP4(VRF) ", "DST IP4");
   uword k, v;
   hash_foreach(k, v, fip64_main.ip6_ip4_hash,                                 \
     u8 * s = 0;                                                               \
     fip64_ip6_t * ip6 = (fip64_ip6_t*) k;                                     \
     fip64_ip4_t * ip4 = (fip64_ip4_t*) v;                                     \
-    s = format (s, "%-40U%-40U%-16U%-16U\n",                                  \
-                   format_ip6_address, &ip6->src,                             \
-                   format_ip6_address, &ip6->dst,                             \
-                   format_ip4_address, &ip4->src,                             \
-                   format_ip4_address, &ip4->dst);                            \
+    s = format (s, "%-40U%-40U%-16U(%3d) %-16U\n",                                  \
+                   format_ip6_address, &ip6->src_address,                     \
+                   format_ip6_address, &ip6->dst_address,                     \
+                   format_ip4_address, &ip4->src_address,                     \
+                   ip4->table_id,                                             \
+                   format_ip4_address, &ip4->dst_address);                    \
+    s = format(s, " %d", &ip4->table_id); \
     vlib_cli_output(vm, (char*) s);                                           \
     vec_free(s);
   );
   vlib_cli_output (vm, "\nDEBUG\n");
-  vlib_cli_output (vm, "IP4 <-> IP6 mappings\n");
-  vlib_cli_output (vm, "%-16s%-16s%-40s%-40s\n",
-                   "SRC IP4", "DST IP4", "SRC IP6", "DST IP6");
+  vlib_cli_output (vm, "IP4 -> IP6 mappings\n");
+  vlib_cli_output (vm, "%-16s%-22s%-40s%-40s\n",
+                   "SRC IP4", "DST IP4(VRF)", "SRC IP6", "DST IP6");
 
   hash_foreach(k, v, fip64_main.ip4_ip6_hash,                                 \
     u8 * s = 0;                                                               \
     fip64_ip4_t * ip4 = (fip64_ip4_t*) k;                                     \
     fip64_ip6_t * ip6 = (fip64_ip6_t*) v;                                     \
-    s = format (s, "%-16U%-16U%-40U%-40U\n",                                  \
-                   format_ip4_address, &ip4->src,                             \
-                   format_ip4_address, &ip4->dst,                             \
-                   format_ip6_address, &ip6->src,                             \
-                   format_ip6_address, &ip6->dst);                            \
+    s = format (s, "%-16U%-16U(%3d) %-40U%-40U\n",                            \
+                   format_ip4_address, &ip4->dst_address,                     \
+                   format_ip4_address, &ip4->src_address,                     \
+                   ip4->table_id,                                            \
+                   format_ip6_address, &ip6->dst_address,                     \
+                   format_ip6_address, &ip6->src_address);                    \
     vlib_cli_output(vm, (char*) s);                                           \
     vec_free(s);
   );
@@ -327,7 +328,8 @@ fip64_show_command_fn (vlib_main_t * vm, unformat_input_t * input,
  *
  * This command show the mapping from an ip6 address to an ip4
  * address and also the ip4 to ip6 mappings corresponding to the two
- * hash maps in the current implementation.
+ * hash maps in the current implementation. Some information can be obtained
+ * from 'show ip fib' and 'show ip6 fib' commands
  */
 /* *INDENT-OFF* */
 VLIB_CLI_COMMAND(fip64_show_command, static) = {
@@ -342,14 +344,16 @@ VLIB_CLI_COMMAND(fip64_show_command, static) = {
  *
  * This command adds the mapping from an ip6 address to an ip4
  * address and also adds the corresponding adjacencies to the ip6
- * and ip4 routing tables.
+ * and ip4 routing tables. It also allows to specify the VRF table for v4
+ * adjacency
  * WARNING: we do not keep track of reference counts on the adjacencies
  * added. We will add support for this in later stages.
  */
 /* *INDENT-OFF* */
 VLIB_CLI_COMMAND(fip64_add_command, static) = {
   .path = "fip64 add",
-  .short_help = "<src_ip6> <dst_ip6> <src_ip4> <dst_ip4>",
+  .short_help = "<src_ip6> <dst_ip6> <src_ip4> <dst_ip4> [table <n>]\n\
+      default table is 0",
   .function = fip64_add_command_fn,
 };
 /* *INDENT-ON* */
