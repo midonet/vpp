@@ -17,6 +17,8 @@
 
 #define frag_id_4to6(id) (id)
 
+extern fip64_main_t _fip64_main;
+
 typedef enum
 {
   IP4_FIP64_NEXT_FIP64_ICMP,
@@ -533,7 +535,8 @@ ip4_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
 
       // Force ip6_lookup to look VRF 0
       vnet_buffer (p0)->sw_if_index[VLIB_TX] = 0;
-      lookup_success = fip64_lookup_ip4_to_ip6(&ip4key, &pheader0->daddr,
+      lookup_success = fip64_lookup_ip4_to_ip6(&_fip64_main,
+                                               &ip4key, &pheader0->daddr,
                                                &pheader0->saddr);
       if (!lookup_success)
       {
@@ -627,3 +630,12 @@ VLIB_REGISTER_NODE(ip4_fip64_node) = {
   },
 };
 /* *INDENT-ON* */
+
+/*
+ * fd.io coding-style-patch-verification: ON
+ *
+ * Local Variables:
+ * eval: (c-set-style "gnu")
+ * indent-tabs-mode: nil
+ * End:
+ */

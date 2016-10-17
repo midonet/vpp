@@ -369,6 +369,21 @@ vnet/fip64/ip6_fip64.c
 nobase_include_HEADERS +=                       \
 vnet/fip64/fip64.h
 
+if ENABLE_TESTS
+
+TESTS += test_fip64
+
+test_fip64_SOURCES =                             \
+ test/fip64/test_fip64.c
+
+test_fip64_CPP_FLAGS = $(AM_CPPFLAGS) -DCLIB_DEBUG
+
+test_fip64_LDADD = libvnet.la $(LDS)
+
+test_fip64_LDFLAGS = -static
+
+endif
+
 ########################################
 # Tunnel protocol: gre
 ########################################
@@ -459,8 +474,11 @@ nobase_include_HEADERS +=			\
 
 
 if ENABLE_TESTS
-LDS = -lvppinfra -l:libvlib.a -l:libdpdk.a -l:libvlibmemory.a \
+LDS = -lvppinfra -l:libvlib.a -l:libvlibmemory.a \
 	-l:libvlibapi.a -l:libsvm.a -lpthread -ldl -lrt -lm -l:libvlib_unix.a
+if WITH_DPDK
+LDS += -l:libdpdk.a
+endif
 
 TESTS += test_cp_serdes test_lisp_types
 

@@ -18,6 +18,8 @@
 #define frag_id_6to4(id) ((id) ^ ((id) >> 16))
 #define u16_net_add(u, val) clib_host_to_net_u16(clib_net_to_host_u16(u) + (val))
 
+extern fip64_main_t _fip64_main;
+
 typedef enum
 {
   IP6_FIP64_NEXT_MAPT_TCP_UDP,
@@ -89,7 +91,8 @@ ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
 
           ip6_header_t *ip6 = vlib_buffer_get_current (p0);
           fip64_ip4_t ip4_mapping;
-          if ( ! fip64_lookup_ip6_to_ip4(&ip6->src_address,
+          if ( ! fip64_lookup_ip6_to_ip4(&_fip64_main,
+                                         &ip6->src_address,
                                          &ip6->dst_address,
                                          &ip4_mapping) )
           {
@@ -667,5 +670,6 @@ VLIB_REGISTER_NODE(ip6_fip64_node) = {
  *
  * Local Variables:
  * eval: (c-set-style "gnu")
+ * indent-tabs-mode: nil
  * End:
  */

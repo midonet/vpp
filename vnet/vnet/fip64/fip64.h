@@ -32,6 +32,9 @@ typedef struct {
 } fip64_ip4_t;
 
 typedef struct {
+  ip6_main_t *ip6_main;
+  ip4_main_t *ip4_main;
+
   uword *ip6_ip4_hash; /* ip6 (src,dst) address to ip4 (src,dst) address map */
   uword *ip4_ip6_hash; /* ip4 (src,dst) address to ip6 (src,dst) address map */
   // TODO: add maps for ref counting adjacencies added for dst_ip6 and src_ip4
@@ -42,6 +45,21 @@ typedef enum
   FIP64_SENDER,
   FIP64_RECEIVER
 } fip64_dir_e;
+
+/**
+ * Initial fip64 main structure. Visible for unit tests.
+ */
+extern clib_error_t *
+fip64_main_init(fip64_main_t * fip64_main, ip6_main_t * ip6_main, ip4_main_t * ip4_main);
+
+extern clib_error_t *
+fip64_add_mapping(fip64_main_t * fip64_main,
+                  fip64_ip6_t * ip6_input, fip64_ip4_t * ip4_input);
+
+extern clib_error_t *
+fip64_del_mapping(fip64_main_t * fip64_main,
+                  fip64_ip6_t * ip6);
+
 
 /**
  * Lookup IP4 (src,dst) addresses for a given IP6 (src,dst) addresses.
@@ -55,7 +73,8 @@ typedef enum
  *             and VRF table id for ip4 adjacency
  */
 extern bool
-fip64_lookup_ip6_to_ip4(ip6_address_t * ip6_src, ip6_address_t * ip6_dst,
+fip64_lookup_ip6_to_ip4(fip64_main_t * fip64_main,
+                        ip6_address_t * ip6_src, ip6_address_t * ip6_dst,
                         fip64_ip4_t * ip4);
 
 /**
@@ -70,7 +89,8 @@ fip64_lookup_ip6_to_ip4(ip6_address_t * ip6_src, ip6_address_t * ip6_dst,
  * @param[out] ip6_dst Pointer where to copy the destination IP6 address.
  */
 extern bool
-fip64_lookup_ip4_to_ip6(fip64_ip4_t * ip4,
+fip64_lookup_ip4_to_ip6(fip64_main_t * fip64_main,
+                        fip64_ip4_t * ip4,
                         ip6_address_t * ip6_src, ip6_address_t * ip6_dst);
 
 /*
@@ -137,3 +157,12 @@ extern vlib_node_registration_t ip4_fip64_tcp_udp_node;
 extern vlib_node_registration_t ip6_fip64_node;
 extern vlib_node_registration_t ip6_fip64_icmp_node;
 extern ip4_main_t ip4_main;
+
+/*
+ * fd.io coding-style-patch-verification: ON
+ *
+ * Local Variables:
+ * eval: (c-set-style "gnu")
+ * indent-tabs-mode: nil
+ * End:
+ */
