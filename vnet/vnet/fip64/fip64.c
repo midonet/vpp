@@ -28,12 +28,15 @@ fip64_init (vlib_main_t * vm)
 }
 
 clib_error_t *
-fip64_main_init(fip64_main_t * fip64_main, ip6_main_t * ip6_main, ip4_main_t * ip4_main)
+fip64_main_init(fip64_main_t * fip64_main, ip6_main_t * ip6_main,
+                ip4_main_t * ip4_main)
 {
   fip64_main->ip6_main = ip6_main;
   fip64_main->ip4_main = ip4_main;
-  fip64_main->ip6_ip4_hash = hash_create_mem(0, sizeof(fip64_ip6_t), sizeof(fip64_ip4_t));
-  fip64_main->ip4_ip6_hash = hash_create_mem(0, sizeof(fip64_ip4_t), sizeof(fip64_ip6_t));
+  fip64_main->ip6_ip4_hash =
+    hash_create_mem(0, sizeof(fip64_ip6_t), sizeof(fip64_ip4_t));
+  fip64_main->ip4_ip6_hash =
+    hash_create_mem(0, sizeof(fip64_ip4_t), sizeof(fip64_ip6_t));
   return 0;
 }
 
@@ -65,25 +68,25 @@ format_fip64_trace (u8 * s, va_list * args)
   fip64_trace_t *trace = va_arg(*args,  fip64_trace_t *);
 
   if (trace->op == IP6_FIP64_TRACE)
-    {
-      s = format(s, "source: %U -> %U\n",
-              format_ip6_address, &trace->ip6.src_address,
-              format_ip4_address, trace->ip4.src_address.data);
-      s = format(s, "    dest: %U -> %U\n",
-              format_ip6_address, &trace->ip6.dst_address,
-              format_ip4_address, trace->ip4.dst_address.data);
-      s = format(s, "table_id: %d", trace->ip4.table_id);
-    }
+  {
+    s = format(s, "source: %U -> %U\n",
+               format_ip6_address, &trace->ip6.src_address,
+               format_ip4_address, trace->ip4.src_address.data);
+    s = format(s, "    dest: %U -> %U\n",
+               format_ip6_address, &trace->ip6.dst_address,
+               format_ip4_address, trace->ip4.dst_address.data);
+    s = format(s, "table_id: %d", trace->ip4.table_id);
+  }
   else
-    {
-      s = format(s, "source: %U -> %U\n",
-              format_ip4_address, trace->ip4.src_address.data,
-              format_ip6_address, &trace->ip6.src_address);
-      s = format(s, "    dest: %U -> %U\n",
-              format_ip4_address, trace->ip4.dst_address.data,
-              format_ip6_address, &trace->ip6.dst_address);
-      s = format(s, "table_id: %d", trace->ip4.table_id);
-    }
+  {
+    s = format(s, "source: %U -> %U\n",
+               format_ip4_address, trace->ip4.src_address.data,
+               format_ip6_address, &trace->ip6.src_address);
+    s = format(s, "    dest: %U -> %U\n",
+               format_ip4_address, trace->ip4.dst_address.data,
+               format_ip6_address, &trace->ip6.dst_address);
+    s = format(s, "table_id: %d", trace->ip4.table_id);
+  }
   return s;
 }
 
@@ -104,11 +107,12 @@ fip64_add_mapping(fip64_main_t * fip64_main,
 }
 
 clib_error_t *
-fip64_del_mapping(fip64_main_t * fip64_main,
-                  fip64_ip6_t * ip6)
+fip64_del_mapping(fip64_main_t * fip64_main, fip64_ip6_t * ip6)
 {
-  fip64_ip4_t * stored_ip4 = (fip64_ip4_t*) *hash_get_mem(fip64_main->ip6_ip4_hash, ip6);
-  fip64_ip6_t * stored_ip6 = (fip64_ip6_t*) *hash_get_mem(fip64_main->ip4_ip6_hash, stored_ip4);
+  fip64_ip4_t * stored_ip4 =
+    (fip64_ip4_t*) *hash_get_mem(fip64_main->ip6_ip4_hash, ip6);
+  fip64_ip6_t * stored_ip6 =
+    (fip64_ip6_t*) *hash_get_mem(fip64_main->ip4_ip6_hash, stored_ip4);
   hash_unset(fip64_main->ip6_ip4_hash, stored_ip6);
   hash_unset(fip64_main->ip4_ip6_hash, stored_ip4);
   clib_mem_free(stored_ip4);
@@ -264,7 +268,8 @@ fip64_add_command_fn (vlib_main_t * vm, unformat_input_t * input,
      )
   {
     unformat_free (line_input);
-    return clib_error_return (0, "invalid input: expected <src_ip6> <dst_ip6> <src_ip4> <dst_ip4> [table <n>]");
+    return clib_error_return (0, "invalid input: expected <src_ip6> <dst_ip6> \
+                                  <src_ip4> <dst_ip4> [table <n>]");
   }
 
   fip64_update_mapping(&_fip64_main, &ip6, &ip4);

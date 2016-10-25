@@ -50,7 +50,8 @@ typedef enum
  * Initial fip64 main structure. Visible for unit tests.
  */
 extern clib_error_t *
-fip64_main_init(fip64_main_t * fip64_main, ip6_main_t * ip6_main, ip4_main_t * ip4_main);
+fip64_main_init(fip64_main_t * fip64_main, ip6_main_t * ip6_main,
+                ip4_main_t * ip4_main);
 
 extern clib_error_t *
 fip64_add_mapping(fip64_main_t * fip64_main,
