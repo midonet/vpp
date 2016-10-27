@@ -13,23 +13,43 @@
  * limitations under the License.
  */
 
+#ifndef included_fip64_fip64_h
+#define included_fip64_fip64_h
+
+#include "fip64_pool.h"
+
 #include <stdbool.h>
 #include <vppinfra/error.h>
 #include <vnet/vnet.h>
 #include <vnet/ip/ip.h>
 #include <vlib/vlib.h>
 
+// TODO: remove
 typedef struct {
   ip6_address_t src_address;
   ip6_address_t dst_address;
 } fip64_ip6_t;
 
+// TODO: remove
 typedef struct {
   ip4_address_t src_address;
   ip4_address_t dst_address;
   // Id of the corresponding VRF table
   u32 table_id;
 } fip64_ip4_t;
+
+typedef struct {
+  fip64_pool_t *pool;
+  u32 table_id;
+  // for reference counting
+  u32 num_fips;
+} fip64_tenant_t;
+
+typedef struct {
+  ip6_address_t fip6;
+  ip4_address_t fixed4;
+  fip64_tenant_t *tenant;
+} fip64_mapping_t;
 
 typedef struct {
   ip6_main_t *ip6_main;
@@ -157,6 +177,8 @@ extern vlib_node_registration_t ip4_fip64_tcp_udp_node;
 extern vlib_node_registration_t ip6_fip64_node;
 extern vlib_node_registration_t ip6_fip64_icmp_node;
 extern ip4_main_t ip4_main;
+
+#endif // included_fip64_fip64_h
 
 /*
  * fd.io coding-style-patch-verification: ON
