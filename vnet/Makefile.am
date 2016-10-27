@@ -364,17 +364,20 @@ nobase_include_HEADERS +=                       \
 libvnet_la_SOURCES +=                           \
 vnet/fip64/fip64.c                              \
 vnet/fip64/ip4_fip64.c                          \
-vnet/fip64/ip6_fip64.c
+vnet/fip64/ip6_fip64.c                          \
+vnet/fip64/fip64_pool.c
 
 nobase_include_HEADERS +=                       \
-vnet/fip64/fip64.h
+vnet/fip64/fip64.h                              \
+vnet/fip64/fip64_pool.h
 
 if ENABLE_TESTS
 
 TESTS += test_fip64
 
 test_fip64_SOURCES =                             \
- test/fip64/test_fip64.c
+ test/fip64/test_fip64.c                         \
+ test/fip64/test_pool.c
 
 test_fip64_CPP_FLAGS = $(AM_CPPFLAGS) -DCLIB_DEBUG
 
