@@ -19,6 +19,8 @@
 
 #include <vnet/fip64/fip64.h>
 
+extern clib_error_t *test_pool();
+
 #define _assert(e)                    \
   error = CLIB_ERROR_ASSERT (e);      \
   if (error)                          \
@@ -90,7 +92,8 @@ test_lookup ()
 }
 
 #define foreach_test_case                 \
-  _(lookup)
+  _(lookup) \
+  _(pool)
 
 int run_tests (void)
 {
