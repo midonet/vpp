@@ -64,4 +64,7 @@ fip64_pool_release (fip64_pool_t* pool, ip4_address_t ip4);
  */
 #define fip64_pool_available(pool) (pool->num_free)
 
+u8 *
+format_pool_range (u8 * s, va_list * va);
+
 #endif // included_fip64_pool_h
