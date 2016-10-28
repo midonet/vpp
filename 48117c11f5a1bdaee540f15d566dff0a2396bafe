@@ -1,0 +1,96 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "baa041b7_e996adee",
+        "filename": "vnet/test/fip64/test_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 165,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-28T08:56:22Z",
+      "side": 1,
+      "message": "To get exact worst lookup time I would take a bitmap, set all bits except first and then call bitmap_set(start_from_first). The loop can calculated \"expected\" lookup time",
+      "range": {
+        "startLine": 162,
+        "startChar": 2,
+        "endLine": 165,
+        "endChar": 47
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_69205df9",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-28T08:56:22Z",
+      "side": 1,
+      "message": "Always 1 \u003c\u003c (32 - prefix)",
+      "range": {
+        "startLine": 33,
+        "startChar": 14,
+        "endLine": 33,
+        "endChar": 51
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_c9b2c996",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-28T08:56:22Z",
+      "side": 1,
+      "message": "We allocate potentially unnesessary 512K of memory for each fip6 tenant.\nJust to bear in mind",
+      "range": {
+        "startLine": 37,
+        "startChar": 2,
+        "endLine": 37,
+        "endChar": 44
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_89f5e185",
+        "filename": "vnet/vnet/fip64/fip64_pool.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 31,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-10-28T08:56:22Z",
+      "side": 1,
+      "message": "extra ;",
+      "range": {
+        "startLine": 31,
+        "startChar": 25,
+        "endLine": 31,
+        "endChar": 27
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
