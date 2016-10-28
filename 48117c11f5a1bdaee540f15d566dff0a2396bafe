@@ -2,6 +2,46 @@
   "comments": [
     {
       "key": {
+        "uuid": "baa041b7_f489e026",
+        "filename": "vnet/test/fip64/test_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2016-10-28T10:53:54Z",
+      "side": 1,
+      "message": "Not a big deal, but move under \u0027done\u0027 label to free in case of error, checking for null in case the pool allocation failed. Same in other functions.",
+      "range": {
+        "startLine": 50,
+        "startChar": 0,
+        "endLine": 50,
+        "endChar": 24
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_1428c4ed",
+        "filename": "vnet/test/fip64/test_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 151,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2016-10-28T10:53:54Z",
+      "side": 1,
+      "message": "I would add somewhere, maybe here, a check that once pool is empty, a call to fip64_pool_get returns 0, so this is is checked also.",
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_e996adee",
         "filename": "vnet/test/fip64/test_pool.c",
         "patchSetId": 2
@@ -17,6 +57,63 @@
         "startLine": 162,
         "startChar": 2,
         "endLine": 165,
+        "endChar": 47
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_d4e37cd7",
+        "filename": "vnet/test/fip64/test_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2016-10-28T10:53:54Z",
+      "side": 1,
+      "message": "space",
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_34be28af",
+        "filename": "vnet/test/fip64/test_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2016-10-28T10:53:54Z",
+      "side": 1,
+      "message": "Not going to happen, but in case the implementation allocates something by error, and the pool is not null, the pool should be freed (maybe failing anyway since if probably be fubar)",
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_545f6c0f",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2016-10-28T10:53:54Z",
+      "side": 1,
+      "message": "Not a big deal, but I think \u0027ip4_address_t prefix, int prefix_length\u0027 would be clearer to the reader.",
+      "range": {
+        "startLine": 22,
+        "startChar": 17,
+        "endLine": 22,
         "endChar": 47
       },
       "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
@@ -107,6 +204,30 @@
       "side": 1,
       "message": "Another choice would be to get rid of the hashing, allocate from the beginning and let the bitmap grow automatically",
       "parentUuid": "baa041b7_c9b2c996",
+      "range": {
+        "startLine": 37,
+        "startChar": 2,
+        "endLine": 37,
+        "endChar": 44
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_d4081c83",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 37,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2016-10-28T10:53:54Z",
+      "side": 1,
+      "message": "I think hashing is a good approach, and not related with the bitmap. One thing is to try to keep the same mapping from IPv6 to IPv4 via a consistent hash, and another the count of used ones (bitmap, tree, hash-map, bloom-filters, etc) in case there are collision and another mapping has to be given.",
+      "parentUuid": "baa041b7_4955991c",
       "range": {
         "startLine": 37,
         "startChar": 2,
