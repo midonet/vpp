@@ -41,33 +41,50 @@ test_lookup ()
   ip4_main_t ip4_main;
   ip6_main_t ip6_main;
   fip64_main_t fip64_main;
-  fip64_ip4_t ip4, output_ip4;
-  fip64_ip6_t ip6, output_ip6;
+  fip64_ip4_t output_ip4;
+  ip4_address_t fixed4, pool_start, pool_end, expected;
+
+  struct {
+    ip6_address_t src_address;
+    ip6_address_t dst_address;
+  } ip6, output_ip6;
 
   init_ip_mains(&ip6_main, &ip4_main);
   fip64_main_init(&fip64_main, &ip6_main, &ip4_main);
+
+  // disable adjacencies under testing (causing crash)
+  fip64_main.testing = true;
 
   ip6.src_address.as_u64[0] = clib_host_to_net_u64(0x2001);
   ip6.src_address.as_u64[1] = clib_host_to_net_u64(0x1);
   ip6.dst_address.as_u64[0] = clib_host_to_net_u64(0x4001);
   ip6.dst_address.as_u64[1] = clib_host_to_net_u64(0x100);
 
-  ip4.src_address.as_u32 = clib_host_to_net_u32(192 << 24 | 168 << 16 | 1);
-  ip4.dst_address.as_u32 = clib_host_to_net_u32(10 << 24 | 1);
+  pool_start.as_u32 = clib_host_to_net_u32(192 << 24 | 168 << 16 | 1);
+  pool_end.as_u32 = clib_host_to_net_u32(192 << 24 | 168 << 16 | 254);
+  expected.as_u32 = clib_host_to_net_u32(192 << 24 | 168 << 16 | 245);
+  fixed4.as_u32 = clib_host_to_net_u32(10 << 24 | 1);
 
   // add mapping, look it up, delete mapping, look up again
-  _assert(fip64_add_mapping(&fip64_main, &ip6, &ip4) == 0);
+  //_assert(fip64_add_mapping(&fip64_main, &ip6, &ip4) == 0);
+  _assert(false == fip64_update_mapping(
+                           &fip64_main,
+                           &ip6.dst_address,
+                           fixed4,
+                           pool_start,
+                           pool_end,
+                           0));
 
   // lookup using ip6 params
   _assert(fip64_lookup_ip6_to_ip4(&fip64_main,
                                   &ip6.src_address, &ip6.dst_address,
                                   &output_ip4));
-  _assert(ip4.src_address.as_u32 == output_ip4.src_address.as_u32);
-  _assert(ip4.dst_address.as_u32 == output_ip4.dst_address.as_u32);
+  _assert(expected.as_u32 == output_ip4.src_address.as_u32);
+  _assert(fixed4.as_u32 == output_ip4.dst_address.as_u32);
 
   // lookup using ip4 params
   _assert(fip64_lookup_ip4_to_ip6(&fip64_main,
-                                  &ip4,
+                                  &output_ip4,
                                   &output_ip6.src_address,
                                   &output_ip6.dst_address));
   _assert(ip6.src_address.as_u64[0] == output_ip6.src_address.as_u64[0]);
@@ -76,17 +93,24 @@ test_lookup ()
   _assert(ip6.dst_address.as_u64[1] == output_ip6.dst_address.as_u64[1]);
 
   // remove the mapping
-  _assert(fip64_del_mapping(&fip64_main, &ip6) == 0);
+  ip4_address_t null_address = {0};
+  _assert(true == fip64_update_mapping(
+                           &fip64_main,
+                           &ip6.dst_address,
+                           null_address,
+                           null_address,
+                           null_address,
+                           1));
+
 
   // lookups should fail
   _assert(!fip64_lookup_ip6_to_ip4(&fip64_main,
                                    &ip6.src_address, &ip6.dst_address,
                                    &output_ip4));
   _assert(!fip64_lookup_ip4_to_ip6(&fip64_main,
-                                   &ip4,
+                                   &output_ip4,
                                    &output_ip6.src_address,
                                    &output_ip6.dst_address));
-
  done:
   return error;
 }

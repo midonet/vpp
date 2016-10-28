@@ -18,12 +18,9 @@
 #include <assert.h>
 #include <vppinfra/hash.h>
 
-static u8 *
+u8 *
 format_pool_range (u8 * s, va_list * va)
 {
-  CLIB_UNUSED (vlib_main_t * vm) = va_arg (*va, vlib_main_t *);
-  CLIB_UNUSED (vlib_node_t * node) = va_arg (*va, vlib_node_t *);
-
   fip64_pool_t *pool = va_arg (*va, fip64_pool_t *);
 
   ip4_address_t start, end;
@@ -48,7 +45,8 @@ fip64_pool_alloc (ip4_address_t start, ip4_address_t end)
   pool->num_free = pool->size = b - a + 1;
   if (pool->start_address > pool->end_address || pool->size == 0)
     {
-      clib_warning("fip64_pool_alloc: invalid range");
+      clib_warning("fip64_pool_alloc: invalid range: %U",
+                  format_pool_range, pool);
       return NULL;
     }
 

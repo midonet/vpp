@@ -19,10 +19,7 @@
 #include <vnet/ip/ip.h>
 #include <vlib/vlib.h>
 
-typedef struct {
-  ip6_address_t src_address;
-  ip6_address_t dst_address;
-} fip64_ip6_t;
+#include "fip64_pool.h"
 
 typedef struct {
   ip4_address_t src_address;
@@ -32,12 +29,33 @@ typedef struct {
 } fip64_ip4_t;
 
 typedef struct {
-  ip6_main_t *ip6_main;
-  ip4_main_t *ip4_main;
+  u32 table_id;
+  ip4_address_t pool_start,
+                pool_end;
+  fip64_pool_t *pool;
+  u32 num_references;
+} fip64_tenant_t;
 
+typedef struct {
+  ip4_address_t fixed;
+  u32 table_id;
+} fip64_ip4key_t;
+
+typedef struct {
+  ip6_address_t fip6;
+  fip64_ip4key_t ip4;
+  fip64_tenant_t *tenant;
   uword *ip6_ip4_hash; /* ip6 (src,dst) address to ip4 (src,dst) address map */
   uword *ip4_ip6_hash; /* ip4 (src,dst) address to ip6 (src,dst) address map */
-  // TODO: add maps for ref counting adjacencies added for dst_ip6 and src_ip4
+} fip64_mapping_t;
+
+typedef struct {
+  ip6_main_t *ip6_main;
+  ip4_main_t *ip4_main;
+  uword *vrf_tenant_hash; /* vrf id to pool mapping */
+  uword *fixed4_mapping_hash; /* fixed4/vrf to fip64 mapping */
+  uword *fip6_mapping_hash; /* fip6 to fip64 mapping */
+  bool testing;
 } fip64_main_t;
 
 typedef enum
@@ -52,14 +70,26 @@ typedef enum
 extern clib_error_t *
 fip64_main_init(fip64_main_t * fip64_main, ip6_main_t * ip6_main, ip4_main_t * ip4_main);
 
-extern clib_error_t *
-fip64_add_mapping(fip64_main_t * fip64_main,
-                  fip64_ip6_t * ip6_input, fip64_ip4_t * ip4_input);
-
-extern clib_error_t *
-fip64_del_mapping(fip64_main_t * fip64_main,
-                  fip64_ip6_t * ip6);
-
+/**
+ * Add or remove an IP6 mapping for a fixed IP4
+ *
+ * Use a null address as fixed4 to remove an existing mapping
+ *
+ * @param[in] fip6 The IP6 FIP address
+ * @param[in] fixed4 The fixed IP4 address
+ * @param[in] pool_start first address for IP4 source allocation
+ * @param[in] pool_end last address for IP4 source allocation
+ * @param[in] table_id VRF table id
+ *
+ * @return true if an existing mapping is removed
+ */
+extern bool
+fip64_update_mapping(fip64_main_t *fip64_main,
+                     ip6_address_t *fip6,
+                     ip4_address_t fixed4,
+                     ip4_address_t pool_start,
+                     ip4_address_t pool_end,
+                     u32 table_id);
 
 /**
  * Lookup IP4 (src,dst) addresses for a given IP6 (src,dst) addresses.
