@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_ef38eda1",
+        "filename": "vnet/test/fip64/test_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 50,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-10-28T14:41:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_f489e026",
+      "range": {
+        "startLine": 50,
+        "startChar": 0,
+        "endLine": 50,
+        "endChar": 24
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_1428c4ed",
         "filename": "vnet/test/fip64/test_pool.c",
         "patchSetId": 2
@@ -82,6 +106,24 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_af42e50d",
+        "filename": "vnet/test/fip64/test_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-10-28T14:41:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_d4e37cd7",
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_34be28af",
         "filename": "vnet/test/fip64/test_pool.c",
         "patchSetId": 2
@@ -93,6 +135,24 @@
       "writtenOn": "2016-10-28T10:53:54Z",
       "side": 1,
       "message": "Not going to happen, but in case the implementation allocates something by error, and the pool is not null, the pool should be freed (maybe failing anyway since if probably be fubar)",
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_2f4ff535",
+        "filename": "vnet/test/fip64/test_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 187,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-10-28T14:41:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_34be28af",
       "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
       "unresolved": false
@@ -133,6 +193,30 @@
       "writtenOn": "2016-10-28T12:31:17Z",
       "side": 1,
       "message": "let\u0027s keep this for now, but the NatTarget from cluster is:\n\n  message NatTarget {\n        optional IPAddress nw_start \u003d 1;\n        optional IPAddress nw_end \u003d 2;\n        optional uint32 tp_start \u003d 3;\n        optional uint32 tp_end \u003d 4;\n    }\n\nnot a subnet. we might have to change one or the other",
+      "range": {
+        "startLine": 22,
+        "startChar": 32,
+        "endLine": 22,
+        "endChar": 35
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_efdead0f",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-10-28T14:41:25Z",
+      "side": 1,
+      "message": "Ok, I will go with the range [start, end].",
+      "parentUuid": "baa041b7_6f0dfd34",
       "range": {
         "startLine": 22,
         "startChar": 32,
@@ -215,6 +299,30 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_8f6f2193",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 33,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-10-28T14:41:25Z",
+      "side": 1,
+      "message": "Good catch. It should not allow prefix zero.",
+      "parentUuid": "baa041b7_d4cdbc31",
+      "range": {
+        "startLine": 33,
+        "startChar": 29,
+        "endLine": 33,
+        "endChar": 47
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_74fcb03f",
         "filename": "vnet/vnet/fip64/fip64_pool.c",
         "patchSetId": 2
@@ -226,6 +334,30 @@
       "writtenOn": "2016-10-28T12:31:17Z",
       "side": 1,
       "message": "does num_addresses change? if not, use it instead of count",
+      "range": {
+        "startLine": 35,
+        "startChar": 2,
+        "endLine": 35,
+        "endChar": 21
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_6f6cdd9d",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-10-28T14:41:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_74fcb03f",
       "range": {
         "startLine": 35,
         "startChar": 2,
@@ -356,6 +488,30 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_4f69198c",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 38,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-10-28T14:41:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_b4d238d0",
+      "range": {
+        "startLine": 38,
+        "startChar": 2,
+        "endLine": 38,
+        "endChar": 38
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_14eb247d",
         "filename": "vnet/vnet/fip64/fip64_pool.c",
         "patchSetId": 2
@@ -367,6 +523,30 @@
       "writtenOn": "2016-10-28T12:31:17Z",
       "side": 1,
       "message": "nit: maybe we should agree on a style rule for spaces? e.g. space before opening parenthesis, no space after? the other way around when closing",
+      "range": {
+        "startLine": 62,
+        "startChar": 4,
+        "endLine": 62,
+        "endChar": 7
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_6ff3bde8",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 62,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-10-28T14:41:25Z",
+      "side": 1,
+      "message": "Yes, sorry. I\u0027ll try to be consistent with the rest of the project.",
+      "parentUuid": "baa041b7_14eb247d",
       "range": {
         "startLine": 62,
         "startChar": 4,
@@ -402,6 +582,30 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_6f4e1dc4",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-10-28T14:41:25Z",
+      "side": 1,
+      "message": "Not aplicable anymore since I changed it to use ranges.",
+      "parentUuid": "baa041b7_cf1c0969",
+      "range": {
+        "startLine": 71,
+        "startChar": 18,
+        "endLine": 71,
+        "endChar": 40
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_f4efa084",
         "filename": "vnet/vnet/fip64/fip64_pool.c",
         "patchSetId": 2
@@ -413,6 +617,30 @@
       "writtenOn": "2016-10-28T12:31:17Z",
       "side": 1,
       "message": "same",
+      "range": {
+        "startLine": 81,
+        "startChar": 8,
+        "endLine": 81,
+        "endChar": 11
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_2ffdb5b1",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 81,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-10-28T14:41:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_f4efa084",
       "range": {
         "startLine": 81,
         "startChar": 8,
@@ -448,6 +676,30 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_2fc25554",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 84,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-10-28T14:41:25Z",
+      "side": 1,
+      "message": "That is checked before, and a zero address is returned. This one here is a legitimate assertion as it `should never happen` that clib_bitmap_first_clear doesn\u0027t find a clear bit.",
+      "parentUuid": "baa041b7_0f98b1cb",
+      "range": {
+        "startLine": 84,
+        "startChar": 10,
+        "endLine": 84,
+        "endChar": 27
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_d4e49ca9",
         "filename": "vnet/vnet/fip64/fip64_pool.c",
         "patchSetId": 2
@@ -459,6 +711,30 @@
       "writtenOn": "2016-10-28T12:31:17Z",
       "side": 1,
       "message": "same",
+      "range": {
+        "startLine": 98,
+        "startChar": 20,
+        "endLine": 98,
+        "endChar": 22
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_cfd9a958",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 98,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-10-28T14:41:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_d4e49ca9",
       "range": {
         "startLine": 98,
         "startChar": 20,
@@ -494,6 +770,30 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_afde653c",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 102,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-10-28T14:41:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_b4e91882",
+      "range": {
+        "startLine": 102,
+        "startChar": 20,
+        "endLine": 102,
+        "endChar": 22
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_2f5c9518",
         "filename": "vnet/vnet/fip64/fip64_pool.c",
         "patchSetId": 2
@@ -505,6 +805,30 @@
       "writtenOn": "2016-10-28T12:31:17Z",
       "side": 1,
       "message": "maybe instead of some of these asserts, the function should return true if the release was successful, false otherwise",
+      "range": {
+        "startLine": 105,
+        "startChar": 2,
+        "endLine": 105,
+        "endChar": 19
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_8fe4c10e",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 105,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-10-28T14:41:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_2f5c9518",
       "range": {
         "startLine": 105,
         "startChar": 2,
@@ -540,6 +864,30 @@
     },
     {
       "key": {
+        "uuid": "baa041b7_6fe17dfc",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 108,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-10-28T14:41:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_8f65e1e3",
+      "range": {
+        "startLine": 108,
+        "startChar": 19,
+        "endLine": 108,
+        "endChar": 21
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "baa041b7_145d647c",
         "filename": "vnet/vnet/fip64/fip64_pool.h",
         "patchSetId": 2
@@ -551,6 +899,30 @@
       "writtenOn": "2016-10-28T12:31:17Z",
       "side": 1,
       "message": "nit: not needed",
+      "range": {
+        "startLine": 27,
+        "startChar": 15,
+        "endLine": 27,
+        "endChar": 27
+      },
+      "revId": "48117c11f5a1bdaee540f15d566dff0a2396bafe",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_0f5b11fb",
+        "filename": "vnet/vnet/fip64/fip64_pool.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 27,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-10-28T14:41:25Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "baa041b7_145d647c",
       "range": {
         "startLine": 27,
         "startChar": 15,
