@@ -71,25 +71,29 @@ extern clib_error_t *
 fip64_main_init(fip64_main_t * fip64_main, ip6_main_t * ip6_main, ip4_main_t * ip4_main);
 
 /**
- * Add or remove an IP6 mapping for a fixed IP4
- *
- * Use a null address as fixed4 to remove an existing mapping
+ * Add an IP6 mapping for a fixed IP4
  *
  * @param[in] fip6 The IP6 FIP address
  * @param[in] fixed4 The fixed IP4 address
  * @param[in] pool_start first address for IP4 source allocation
  * @param[in] pool_end last address for IP4 source allocation
  * @param[in] table_id VRF table id
- *
- * @return true if an existing mapping is removed
  */
-extern bool
-fip64_update_mapping(fip64_main_t *fip64_main,
-                     ip6_address_t *fip6,
-                     ip4_address_t fixed4,
-                     ip4_address_t pool_start,
-                     ip4_address_t pool_end,
-                     u32 table_id);
+extern clib_error_t *
+fip64_add(fip64_main_t *fip64_main,
+          ip6_address_t *fip6,
+          ip4_address_t fixed4,
+          ip4_address_t pool_start,
+          ip4_address_t pool_end,
+          u32 table_id);
+
+/**
+ * Remove an IP6 mapping
+ *
+ * @param[in] fip6 The IP6 FIP address
+ */
+extern clib_error_t *
+fip64_delete(fip64_main_t *fip64_main, ip6_address_t *fip6);
 
 /**
  * Lookup IP4 (src,dst) addresses for a given IP6 (src,dst) addresses.
