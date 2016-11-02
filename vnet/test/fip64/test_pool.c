@@ -41,7 +41,8 @@ test_pool_single_host ()
   u32 address = 0x0a090807; // 10.9.8.7 address
   ip4_address_t net = address_from_u32(address);
 
-  ip6_address_t ip6 = {0};
+  ip6_address_t ip6;
+  memset(&ip6, 0, sizeof(ip6_address_t));
   ip6.as_u8[0] = 0x20;
   ip6.as_u8[1] = 0x16;
   ip6.as_u8[15] = 1; // 2016::1
@@ -73,7 +74,8 @@ test_pool_two_hosts ()
   ip4_address_t start = address_from_u32(address),
                 end   = address_from_u32(address + 1);
 
-  ip6_address_t ip6 = {0};
+  ip6_address_t ip6;
+  memset(&ip6, 0, sizeof(ip6_address_t));
   ip6.as_u8[0] = 0x20;
   ip6.as_u8[1] = 0x16;
   ip6.as_u8[15] = 1; // 2016::1
@@ -129,13 +131,14 @@ test_pool_fill (u32 start, u32 end)
   _assert (used != 0);
 
   ip4_address_t ip4;
-  ip6_address_t ip6 = {0};
+  ip6_address_t ip6;
+  memset(&ip6, 0, sizeof(ip6_address_t));
   ip6.as_u8[0] = 0x20;
   ip6.as_u8[1] = 0x16; // 2016::x
 
   clock_t worst = 0;
-
-  for (u32 i=0;i<pool->size;++i)
+  u32 i = 0;
+  for (;i<pool->size;++i)
     {
       ip6.as_u32[3] ++;
 
@@ -153,7 +156,7 @@ test_pool_fill (u32 start, u32 end)
   _assert(fip64_pool_available(pool) == 0);
   _assert (fip64_pool_get(pool, &ip6).as_u32 == 0);
 
-  for (u32 i=0;i<pool->size;++i)
+  for (i=0;i<pool->size;++i)
     {
       _assert (used[i] == true);
       ip4 = address_from_u32 (pool->start_address + i);

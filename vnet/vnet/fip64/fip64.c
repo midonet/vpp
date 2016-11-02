@@ -270,123 +270,161 @@ derive_net_prefix_from_range(ip4_address_t start, ip4_address_t end)
   return 32;
 }
 
-/*
- * Update a mapping:
- *
- *  - If old mapping to IP4 exists, deletes it (return non-zero)
- *  - If new mapping is IP4 is given, add it
- *
- * Returns 0 if no old mapping is found
- */
-bool
-fip64_update_mapping(fip64_main_t *fip64_main,
-                     ip6_address_t *fip6,
-                     ip4_address_t fixed4,
-                     ip4_address_t pool_start,
-                     ip4_address_t pool_end,
-                     u32 table_id)
+/**
+* Deletes existing fip6
+*
+* Removes ipv6 adjacency for the fip. If the fip6 is the last one for given
+* tenant, then also deletes ipv4 adjacency of the tenant
+*/
+clib_error_t *
+fip64_delete(fip64_main_t *fip64_main,
+             ip6_address_t *fip6)
 {
-  /* Remove old mapping and adjacencies if it already exists */
-
   uword *p = hash_get_mem(fip64_main->fip6_mapping_hash, fip6);
-  bool remove_existing = p != 0;
-
-  if (remove_existing)
-  {
-    fip64_mapping_t *old_mapping = (fip64_mapping_t*) *p;
-    fip64_tenant_t *tenant = old_mapping->tenant;
-    CLIB_ERROR_ASSERT( tenant != NULL );
-
-    hash_unset(fip64_main->fip6_mapping_hash, fip6);
-
-    hash_unset(fip64_main->fixed4_mapping_hash, &old_mapping->ip4);
-
-    fip64_del_all_mappings(old_mapping);
-    clib_mem_free(old_mapping);
-
-    fip64_add_del_ip6_adjacency(fip64_main,
-                                &old_mapping->fip6, IP4_ROUTE_FLAG_DEL);
-
-    if (! --tenant->num_references)
-    {
-      fip64_add_del_ip4_adjacency(fip64_main,
-                                  &tenant->pool_start,
-                                  derive_net_prefix_from_range(tenant->pool_start,
-                                                             tenant->pool_end),
-                                  IP4_ROUTE_FLAG_DEL,
-                                  tenant->table_id);
-
-      hash_unset (fip64_main->vrf_tenant_hash, &tenant->table_id);
-      clib_warning ("Removed pool[%d] %U",
-                    tenant->table_id,
-                    format_pool_range, tenant->pool);
-      fip64_pool_free (tenant->pool);
-      clib_mem_free (tenant);
-    }
+  if (p == 0) {
+    return clib_error_return (0, "Non-existing FIP64: %U", format_ip6_address, fip6);
   }
 
-  /* Add new mapping and adjacency if fixed4 not zero */
-  if(fixed4.as_u32 != 0)
+  fip64_mapping_t *old_mapping = (fip64_mapping_t*) *p;
+  fip64_tenant_t *tenant = old_mapping->tenant;
+  CLIB_ERROR_ASSERT( tenant != NULL );
+
+  hash_unset(fip64_main->fip6_mapping_hash, fip6);
+
+  hash_unset(fip64_main->fixed4_mapping_hash, &old_mapping->ip4);
+
+  fip64_del_all_mappings(old_mapping);
+  clib_mem_free(old_mapping);
+
+  fip64_add_del_ip6_adjacency(fip64_main,
+                  &old_mapping->fip6, IP4_ROUTE_FLAG_DEL);
+
+  if (! --tenant->num_references)
   {
-    fip64_mapping_t *mapping = clib_mem_alloc(sizeof(fip64_mapping_t));
-    memset(mapping, 0, sizeof(fip64_mapping_t));
+    fip64_add_del_ip4_adjacency(fip64_main,
+                      &tenant->pool_start,
+                      derive_net_prefix_from_range(tenant->pool_start,
+                                                   tenant->pool_end),
+                      IP4_ROUTE_FLAG_DEL,
+                      tenant->table_id);
 
-    mapping->fip6 = *fip6;
-    mapping->ip4.fixed = fixed4;
-    mapping->ip4.table_id = table_id;
+    hash_unset (fip64_main->vrf_tenant_hash, &tenant->table_id);
+    clib_warning ("Removed pool[%d] %U",
+                  tenant->table_id,
+                  format_pool_range, tenant->pool);
+    fip64_pool_free (tenant->pool);
+    clib_mem_free (tenant);
+  }
 
-    p = hash_get_mem(fip64_main->vrf_tenant_hash, &table_id);
-    fip64_tenant_t *tenant;
-    if (p == NULL)
-    {
-      tenant = (fip64_tenant_t*) clib_mem_alloc(sizeof(fip64_tenant_t));
-      memset(tenant, 0, sizeof(fip64_tenant_t));
-      tenant->table_id = table_id;
-      tenant->num_references = 1;
-      tenant->pool_start = pool_start;
-      tenant->pool_end = pool_end;
-      tenant->pool = fip64_pool_alloc(pool_start, pool_end);
-      CLIB_ERROR_ASSERT (tenant->pool != NULL);
-      hash_set_mem(fip64_main->vrf_tenant_hash, &tenant->table_id, tenant);
+  return 0;
+}
 
-      fip64_add_del_ip4_adjacency(fip64_main,
-                                  &tenant->pool_start,
-                                  derive_net_prefix_from_range(tenant->pool_start,
-                                                             tenant->pool_end),
-                                  IP4_ROUTE_FLAG_ADD,
-                                  tenant->table_id);
-    }
-    else
-    {
-      tenant = (fip64_tenant_t*) *p;
-      tenant->num_references ++;
-      fip64_pool_t *pool = tenant->pool;
+/*
+ * Create a FIP64 mapping
+ */
+clib_error_t *
+fip64_add(fip64_main_t *fip64_main,
+          ip6_address_t *fip6,
+          ip4_address_t fixed4,
+          ip4_address_t pool_start,
+          ip4_address_t pool_end,
+          u32 table_id)
+{
+  /* check that tenant can be created beforehand */
+  uword *p = hash_get_mem(fip64_main->vrf_tenant_hash, &table_id);
+  fip64_tenant_t *tenant = p? (fip64_tenant_t*)*p : 0;
+  bool pool_passed = pool_end.as_u32 != 0;
 
-      if (clib_net_to_host_u32(pool_start.as_u32) != pool->start_address
-          || clib_net_to_host_u32(pool_end.as_u32) != pool->end_address)
-        {
-          clib_warning ("Passed pool parameters don't match previously created "
-                        "pool for table %d (%U). Ignoring",
-                        tenant->table_id,
-                        format_pool_range, pool);
-        }
-    }
+  // If creating a tenant, it needs a pool
+  if (!tenant && !pool_passed)
+  {
+    return clib_error_return (0, "VRF table %u has no pool associated"
+                                 " and none was specified.", table_id);
+  }
 
-    mapping->tenant = tenant;
+  // a FIP6 must be unique. Can't be used twice even for different tenants
+  if (0 != hash_get_mem(fip64_main->fip6_mapping_hash, fip6))
+  {
+    return clib_error_return (0, "Address %U is already mapped."
+                                 " Delete it first", format_ip6_address, fip6);
+  }
 
-   clib_warning ("Using pool[%d] = %U", tenant->table_id,
+  /* a (fixed4, table_id) pair must be unique. Can't associate a fixed ip
+   * to two or more fips on the same tenant.
+   * It's technically possible, but will make 4->6 translation more complicated.
+   */
+  fip64_ip4key_t ip4key;
+  ip4key.fixed = fixed4;
+  ip4key.table_id = table_id;
+  if (0 != hash_get_mem(fip64_main->fixed4_mapping_hash, &ip4key))
+  {
+    return clib_error_return (0, "Address %U is already mapped"
+                                 " in VRF table %u. Delete it first",
+                                 format_ip4_address, &fixed4,
+                                 table_id);
+  }
+
+  /* Add new mapping and adjacency */
+
+  fip64_mapping_t *mapping = clib_mem_alloc(sizeof(fip64_mapping_t));
+  memset(mapping, 0, sizeof(fip64_mapping_t));
+
+  mapping->fip6 = *fip6;
+  mapping->ip4.fixed = fixed4;
+  mapping->ip4.table_id = table_id;
+
+  if (tenant == NULL)
+  {
+    // create new tenant
+
+    tenant = (fip64_tenant_t*) clib_mem_alloc(sizeof(fip64_tenant_t));
+    memset(tenant, 0, sizeof(fip64_tenant_t));
+    tenant->table_id = table_id;
+    tenant->num_references = 1;
+    tenant->pool_start = pool_start;
+    tenant->pool_end = pool_end;
+    tenant->pool = fip64_pool_alloc(pool_start, pool_end);
+    CLIB_ERROR_ASSERT (tenant->pool != NULL);
+    hash_set_mem(fip64_main->vrf_tenant_hash, &tenant->table_id, tenant);
+
+    fip64_add_del_ip4_adjacency(fip64_main,
+                                &tenant->pool_start,
+                                derive_net_prefix_from_range(tenant->pool_start,
+                                                           tenant->pool_end),
+                                IP4_ROUTE_FLAG_ADD,
+                                tenant->table_id);
+  }
+  else
+  {
+    // existing tenant
+
+    tenant->num_references ++;
+    fip64_pool_t *pool = tenant->pool;
+
+    if (pool_passed
+        && (clib_net_to_host_u32(pool_start.as_u32) != pool->start_address
+          || clib_net_to_host_u32(pool_end.as_u32) != pool->end_address))
+      {
+        clib_warning ("Passed pool parameters don't match previously created "
+                      "pool for table %d (%U). Ignoring",
+                      tenant->table_id,
+                      format_pool_range, pool);
+      }
+  }
+
+  mapping->tenant = tenant;
+
+  clib_warning ("Using pool[%d] = %U", tenant->table_id,
                 format_pool_range, tenant->pool);
 
-    mapping->ip6_ip4_hash = hash_create_mem(0, sizeof(ip6_address_t), sizeof(ip4_address_t));
-    mapping->ip4_ip6_hash = hash_create_mem(0, sizeof(ip4_address_t), sizeof(ip6_address_t));
-    hash_set_mem(fip64_main->fip6_mapping_hash, &mapping->fip6, mapping);
+  mapping->ip6_ip4_hash = hash_create_mem(0, sizeof(ip6_address_t), sizeof(ip4_address_t));
+  mapping->ip4_ip6_hash = hash_create_mem(0, sizeof(ip4_address_t), sizeof(ip6_address_t));
+  hash_set_mem(fip64_main->fip6_mapping_hash, &mapping->fip6, mapping);
 
-    fip64_add_del_ip6_adjacency(fip64_main, &mapping->fip6, IP6_ROUTE_FLAG_ADD);
+  fip64_add_del_ip6_adjacency(fip64_main, &mapping->fip6, IP6_ROUTE_FLAG_ADD);
+  hash_set_mem(fip64_main->fixed4_mapping_hash, &mapping->ip4, mapping);
 
-    hash_set_mem(fip64_main->fixed4_mapping_hash, &mapping->ip4, mapping);
-  }
-
-  return remove_existing;
+  return 0;
 }
 
 static clib_error_t*
@@ -398,36 +436,46 @@ fip64_add_command_fn (vlib_main_t * vm, unformat_input_t * input,
   if (!unformat_user (input, unformat_line_input, line_input))
     return 0;
 
-  ip6_address_t fip6,
-                ignored;
+  ip6_address_t fip6;
   ip4_address_t fixed4,
                 pool_start,
                 pool_end;
-  u32 table_id = 0;
+  u32 host_pool_start = 0,
+      host_pool_end = 0;
 
-  if (  !unformat (line_input, "%U", unformat_ip6_address, &ignored)
-     || !unformat (line_input, "%U", unformat_ip6_address, &fip6)
-     || !unformat (line_input, "%U", unformat_ip4_address, &pool_start)
-     || !unformat (line_input, "%U", unformat_ip4_address, &fixed4)
-     || (  unformat_check_input (line_input) != UNFORMAT_END_OF_INPUT
-        && !unformat (line_input, "table %d", &table_id) )
-     )
+  u32 table_id = 0;
+  pool_start.as_u32 = 0;
+  pool_end.as_u32 = 0;
+
+  bool got_ips = unformat (line_input, "%U %U", unformat_ip6_address, &fip6,
+                           unformat_ip4_address, &fixed4);
+  unformat (line_input, "pool %U %U", unformat_ip4_address,
+                                      &pool_start,
+                                      unformat_ip4_address,
+                                      &pool_end);
+  unformat (line_input, "table %d", &table_id);
+  bool at_end = unformat_check_input (line_input) == UNFORMAT_END_OF_INPUT;
+
+  unformat_free (line_input);
+
+  if (!got_ips || !at_end)
   {
-    unformat_free (line_input);
-    return clib_error_return (0, "invalid input: expected <src_ip6> <dst_ip6> <src_ip4> <dst_ip4> [table <n>]");
+    return clib_error_return (0, "invalid input: expected <ip6_fip6> <ip4_fixed4> [pool <ip4_pool_start> <ip4_pool_end>] [table <n>]");
   }
 
-  // hardcode /24 pool
-  pool_end.as_u32 = clib_host_to_net_u32(
-                       (clib_net_to_host_u32(pool_start.as_u32) | 0xff) - 1);
-
-  fip64_update_mapping(&_fip64_main,
-                       &fip6,
-                       fixed4,
-                       pool_start,
-                       pool_end,
-                       table_id);
-  return 0;
+  host_pool_start = clib_net_to_host_u32(pool_start.as_u32);
+  host_pool_end = clib_net_to_host_u32(pool_end.as_u32);
+  if (host_pool_end && host_pool_end < host_pool_start) {
+      return clib_error_return_code(0, 1, 0, "Pool end must be at least pool \
+start, got: %U - %U", format_ip4_address, &host_pool_start,
+                      format_ip4_address, &host_pool_end);
+  }
+  return fip64_add(&_fip64_main,
+                   &fip6,
+                   fixed4,
+                   pool_start,
+                   pool_end,
+                   table_id);
 }
 
 static clib_error_t*
@@ -435,33 +483,31 @@ fip64_del_command_fn (vlib_main_t * vm, unformat_input_t * input,
                       vlib_cli_command_t * cmd)
 {
   unformat_input_t _line_input, *line_input = &_line_input;
-  ip6_address_t ignored,
-                fip6;
+  ip6_address_t fip6;
 
   if (!unformat_user (input, unformat_line_input, line_input))
     return 0;
 
   while (unformat_check_input (line_input) != UNFORMAT_END_OF_INPUT)
   {
-      if (  !unformat (line_input, "%U", unformat_ip6_address, &ignored)
-         || !unformat (line_input, "%U", unformat_ip6_address, &fip6))
+      if ( !unformat (line_input, "%U", unformat_ip6_address, &fip6))
       {
         unformat_free (line_input);
-        return clib_error_return (0, "invalid input: expected <src_ip6> <dst_ip6>");
+        return clib_error_return (0, "invalid input: expected  <ip6_fip6>");
       }
+
+      clib_error_t *error = fip64_delete(&_fip64_main, &fip6);
+      if (error != 0)
+      {
+        clib_warning("Error deleting %U: %U",
+                     format_ip6_address, &fip6,
+                     format_clib_error, error);
+        clib_error_free(error);
+      }
+
   }
   unformat_free (line_input);
 
-  ip4_address_t null_address = {0};
-  if (!fip64_update_mapping(&_fip64_main,
-                            &fip6,
-                            null_address,
-                            null_address,
-                            null_address,
-                            0))
-  {
-    return clib_error_return (0, "warning: mapping not found");
-  }
   return 0;
 }
 
@@ -533,8 +579,8 @@ VLIB_CLI_COMMAND(fip64_show_command, static) = {
 /* *INDENT-OFF* */
 VLIB_CLI_COMMAND(fip64_add_command, static) = {
   .path = "fip64 add",
-  .short_help = "<src_ip6> <dst_ip6> <src_ip4> <dst_ip4> [table <n>]\n\
-      default table is 0",
+  .short_help = "<ip6_fip6> <ip4_fixed4> [pool <ip4_pool_start> <ip4_pool_end>] [table <n>]\n\
+\t\t\t\t pool can be omitted if there is already one specified for given table; default table is 0",
   .function = fip64_add_command_fn,
 };
 /* *INDENT-ON* */
@@ -551,7 +597,7 @@ VLIB_CLI_COMMAND(fip64_add_command, static) = {
 /* *INDENT-OFF* */
 VLIB_CLI_COMMAND(fip64_del_command, static) = {
   .path = "fip64 del",
-  .short_help = "<src_ip6> <dst_ip6>",
+  .short_help = "<ip6_fip6>",
   .function = fip64_del_command_fn,
 };
 /* *INDENT-ON* */
