@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "baa041b7_2cf01166",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 274,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-11-02T11:13:58Z",
+      "side": 1,
+      "message": "Seems to be equivalent too:\nint result \u003d __builtin_clz (start.as_u32 ^ end.as_u32);\nreturn result !\u003d 31 ? result : 30;",
+      "range": {
+        "startLine": 263,
+        "startChar": 2,
+        "endLine": 274,
+        "endChar": 3
+      },
+      "revId": "d199b9c4feb926526e3e18b821839a0ddb065baa",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "baa041b7_ecb7c983",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 1
+      },
+      "lineNbr": 292,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-11-02T11:13:58Z",
+      "side": 1,
+      "message": "We could create too separate commands, one just adds range to given VRF, another adds fip6 -\u003e fixed4 mapping for given VRF",
+      "range": {
+        "startLine": 288,
+        "startChar": 1,
+        "endLine": 292,
+        "endChar": 33
+      },
+      "revId": "d199b9c4feb926526e3e18b821839a0ddb065baa",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
