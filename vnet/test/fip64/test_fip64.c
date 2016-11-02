@@ -67,13 +67,12 @@ test_lookup ()
 
   // add mapping, look it up, delete mapping, look up again
   //_assert(fip64_add_mapping(&fip64_main, &ip6, &ip4) == 0);
-  _assert(false == fip64_update_mapping(
-                           &fip64_main,
-                           &ip6.dst_address,
-                           fixed4,
-                           pool_start,
-                           pool_end,
-                           0));
+  _assert(0 == fip64_add(&fip64_main,
+                         &ip6.dst_address,
+                         fixed4,
+                         pool_start,
+                         pool_end,
+                         0));
 
   // lookup using ip6 params
   _assert(fip64_lookup_ip6_to_ip4(&fip64_main,
@@ -93,15 +92,7 @@ test_lookup ()
   _assert(ip6.dst_address.as_u64[1] == output_ip6.dst_address.as_u64[1]);
 
   // remove the mapping
-  ip4_address_t null_address = {0};
-  _assert(true == fip64_update_mapping(
-                           &fip64_main,
-                           &ip6.dst_address,
-                           null_address,
-                           null_address,
-                           null_address,
-                           1));
-
+  _assert(0 == fip64_delete(&fip64_main, &ip6.dst_address));
 
   // lookups should fail
   _assert(!fip64_lookup_ip6_to_ip4(&fip64_main,
