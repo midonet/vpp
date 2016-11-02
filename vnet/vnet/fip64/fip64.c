@@ -404,23 +404,29 @@ fip64_add_command_fn (vlib_main_t * vm, unformat_input_t * input,
                 pool_start,
                 pool_end;
   u32 table_id = 0;
+  pool_end.as_u32 = 0;
 
   if (  !unformat (line_input, "%U", unformat_ip6_address, &ignored)
      || !unformat (line_input, "%U", unformat_ip6_address, &fip6)
      || !unformat (line_input, "%U", unformat_ip4_address, &pool_start)
      || !unformat (line_input, "%U", unformat_ip4_address, &fixed4)
      || (  unformat_check_input (line_input) != UNFORMAT_END_OF_INPUT
+        && !unformat (line_input, "table %d", &table_id)
+        && !unformat (line_input, "%U", unformat_ip4_address, &pool_end))
+     || (  unformat_check_input (line_input) != UNFORMAT_END_OF_INPUT
         && !unformat (line_input, "table %d", &table_id) )
      )
   {
     unformat_free (line_input);
-    return clib_error_return (0, "invalid input: expected <src_ip6> <dst_ip6> <src_ip4> <dst_ip4> [table <n>]");
+    return clib_error_return (0, "invalid input: expected <ip6_ignored> \
+<ip6_fip6> <ip4_pool_start> <ip4_fixed4> [<ip4_pool_end>] [table <n>]");
   }
 
-  // hardcode /24 pool
-  pool_end.as_u32 = clib_host_to_net_u32(
-                       (clib_net_to_host_u32(pool_start.as_u32) | 0xff) - 1);
-
+  if (pool_end.as_u32 == 0) {
+    // hardcode /24 pool
+    pool_end.as_u32 = clib_host_to_net_u32(
+                         (clib_net_to_host_u32(pool_start.as_u32) | 0xff) - 1);
+  }
   fip64_update_mapping(&_fip64_main,
                        &fip6,
                        fixed4,
@@ -447,12 +453,13 @@ fip64_del_command_fn (vlib_main_t * vm, unformat_input_t * input,
          || !unformat (line_input, "%U", unformat_ip6_address, &fip6))
       {
         unformat_free (line_input);
-        return clib_error_return (0, "invalid input: expected <src_ip6> <dst_ip6>");
+        return clib_error_return (0, "invalid input: expected <ip6_ignored> <ip6_fip6>");
       }
   }
   unformat_free (line_input);
 
-  ip4_address_t null_address = {0};
+  ip4_address_t null_address;
+  null_address.as_u32 = 0;
   if (!fip64_update_mapping(&_fip64_main,
                             &fip6,
                             null_address,
@@ -533,8 +540,8 @@ VLIB_CLI_COMMAND(fip64_show_command, static) = {
 /* *INDENT-OFF* */
 VLIB_CLI_COMMAND(fip64_add_command, static) = {
   .path = "fip64 add",
-  .short_help = "<src_ip6> <dst_ip6> <src_ip4> <dst_ip4> [table <n>]\n\
-      default table is 0",
+  .short_help = "<ip6_ignored> <ip6_fip6> <ip4_pool_start> <ip4_fixed4> [<ip4_pool_end>] [table <n>]\n\
+\t\t\t\tdefault end pool address is pool_start | 0xff; default table is 0",
   .function = fip64_add_command_fn,
 };
 /* *INDENT-ON* */
@@ -551,7 +558,7 @@ VLIB_CLI_COMMAND(fip64_add_command, static) = {
 /* *INDENT-OFF* */
 VLIB_CLI_COMMAND(fip64_del_command, static) = {
   .path = "fip64 del",
-  .short_help = "<src_ip6> <dst_ip6>",
+  .short_help = "<ip6_ignored> <ip6_fip6>",
   .function = fip64_del_command_fn,
 };
 /* *INDENT-ON* */
