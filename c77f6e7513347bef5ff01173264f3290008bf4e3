@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "baa041b7_4c47d57a",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 34,
+      "author": {
+        "id": 1002751
+      },
+      "writtenOn": "2016-11-02T11:00:51Z",
+      "side": 1,
+      "message": "nit: tab",
+      "range": {
+        "startLine": 34,
+        "startChar": 0,
+        "endLine": 34,
+        "endChar": 1
+      },
+      "revId": "c77f6e7513347bef5ff01173264f3290008bf4e3",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
