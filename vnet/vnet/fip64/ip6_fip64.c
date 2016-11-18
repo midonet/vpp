@@ -55,9 +55,54 @@ int ip6_parse(const ip6_header_t *ip6, u32 buff_len,
       (clib_net_to_host_u16(ip6->payload_length) < (*l4_offset + 4 - sizeof(*ip6)));
 }
 
+/* sample function to generate an ip4 udp packet
+ * src: 1.1.1.1 port 11111
+ * dst: 10.4.4.4 port 22222
+ * payload: "Hello world!"
+ */
+static u16
+build_report_packet(u8 *data, void *context)
+{
+  ip4_header_t *ip = (ip4_header_t*) data;
+  udp_header_t *udp = (udp_header_t*) &ip[1];
+  u8 *body = (u8*) &udp[1];
+
+  memset(data, 0, body - data);
+  char *payload = "Hello world!";
+  size_t payload_length = strlen(payload);
+
+  ip->ip_version_and_header_length = 0x45;
+  ip->ttl = 254;
+  ip->protocol = IP_PROTOCOL_UDP;
+  ip->src_address.as_u32 = clib_host_to_net_u32(0x01010101);
+  ip->dst_address.as_u32 = clib_host_to_net_u32(0x0a040404);
+
+  udp->src_port = clib_host_to_net_u16 (11111);
+  udp->dst_port = clib_host_to_net_u16 (22222);
+
+  size_t length = payload_length + sizeof(*udp);
+  udp->length = clib_host_to_net_u16 (length);
+
+  clib_memcpy (body, payload, payload_length);
+
+  ip_csum_t csum;
+  csum = ip_incremental_checksum (0, udp, length);
+  csum = ip_csum_with_carry (csum, udp->length);
+  csum = ip_csum_with_carry (csum,
+                             clib_host_to_net_u16 (IP_PROTOCOL_UDP));
+  csum = ip_csum_with_carry (csum, *((u64 *) (&ip->src_address)));
+  udp->checksum = ~ip_csum_fold (csum);
+
+  length += sizeof(*ip);
+  ip->length = clib_host_to_net_u16 (length);
+  ip->checksum = ip4_header_checksum (ip);
+  return length;
+}
+
 static uword
 ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
 {
+  bool packets_injected = false;
   u32 n_left_from, *from, next_index, *to_next, n_left_to_next;
   vlib_node_runtime_t *error_node = vlib_node_get_runtime (vm,
                                                            ip6_fip64_node.index);
@@ -89,15 +134,40 @@ ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
           p0 = vlib_get_buffer (vm, pi0);
           ip60 = vlib_buffer_get_current (p0);
 
+          bool is_traced = p0->flags & VLIB_BUFFER_IS_TRACED;
+
           ip6_header_t *ip6 = vlib_buffer_get_current (p0);
           fip64_ip4_t ip4_mapping;
-          if ( ! fip64_lookup_ip6_to_ip4(&_fip64_main,
-                                         &ip6->src_address,
-                                         &ip6->dst_address,
-                                         &ip4_mapping) )
+          fip64_lookup_result_t result = fip64_lookup_ip6_to_ip4(&_fip64_main,
+                                                            &ip6->src_address,
+                                                            &ip6->dst_address,
+                                                            &ip4_mapping);
+
+          switch (result)
           {
+            case FIP64_LOOKUP_FAILED:
               /* if lookup fails, map to zero address */
-            memset(&ip4_mapping, 0, sizeof(ip4_mapping));
+              memset(&ip4_mapping, 0, sizeof(ip4_mapping));
+              break;
+
+            case FIP64_LOOKUP_IN_CACHE:
+              // TODO:   break;
+              // currently falling back to ALLOCATED branch
+              // to send a packet every time.
+              // otherwise the first packet is dropped because
+              // of address resolution.
+            case FIP64_LOOKUP_ALLOCATED:
+              {
+                void *context[2];
+                context[0] = &ip6->src_address;
+                context[1] = &ip4_mapping;
+                pkinject_by_callback (_fip64_main.pkinject,
+                                      build_report_packet,
+                                      context,
+                                      is_traced? PKINJECT_FLAG_TRACE : 0);
+                packets_injected = true;
+              }
+              break;
           }
 
           // Send mapping to all fip64 specific nodes
@@ -107,7 +177,7 @@ ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
           vnet_buffer (p0)->sw_if_index[VLIB_TX] = ip4_mapping.table_id;
           vnet_buffer (p0)->map_t.mtu = ~0;
 
-          if (PREDICT_FALSE ( p0->flags & VLIB_BUFFER_IS_TRACED ))
+          if (PREDICT_FALSE ( is_traced ))
             {
               fip64_trace_t *trace = vlib_add_trace(vm,
                                                     node,
@@ -219,6 +289,11 @@ ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
         }
       vlib_put_next_frame (vm, node, next_index, n_left_to_next);
     }
+  if (packets_injected)
+  {
+    pkinject_flush (_fip64_main.pkinject);
+  }
+
   return frame->n_vectors;
 }
 
@@ -226,7 +301,7 @@ static_always_inline u8
 ip6_translate_tos (const ip6_header_t * ip6)
 {
   return (clib_net_to_host_u32 (ip6->ip_version_traffic_class_and_flow_label)
-	  & 0x0ff00000) >> 20;
+           & 0x0ff00000) >> 20;
 }
 
 //TODO: Find right place in memory for that
