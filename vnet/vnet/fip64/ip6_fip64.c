@@ -45,6 +45,11 @@ int ip6_parse(const ip6_header_t *ip6, u32 buff_len,
     *l4_protocol = ((ip6_frag_hdr_t *)(ip6 + 1))->next_hdr;
     *frag_hdr_offset = sizeof(*ip6);
     *l4_offset = sizeof(*ip6) + sizeof(ip6_frag_hdr_t);
+    clib_warning ("At ip6_parse and packet is fragmented: \
+buff_len: %d \
+l4_proto: %d \
+frag_hdr_offset: %d \
+", buff_len, *l4_protocol, *frag_hdr_offset);
   } else {
     *l4_protocol = ip6->protocol;
     *frag_hdr_offset = 0;
