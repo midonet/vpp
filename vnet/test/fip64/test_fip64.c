@@ -50,7 +50,7 @@ test_lookup ()
   } ip6, output_ip6;
 
   init_ip_mains(&ip6_main, &ip4_main);
-  fip64_main_init(&fip64_main, &ip6_main, &ip4_main);
+  fip64_main_init(0, &fip64_main, &ip6_main, &ip4_main);
 
   // disable adjacencies under testing (causing crash)
   fip64_main.testing = true;
