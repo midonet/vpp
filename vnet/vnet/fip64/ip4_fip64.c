@@ -23,6 +23,7 @@ typedef enum
 {
   IP4_FIP64_NEXT_FIP64_ICMP,
   IP4_FIP64_NEXT_FIP64_TCP_UDP,
+  IP4_FIP64_NEXT_FIP64_FRAGMENTED,
   IP4_FIP64_NEXT_DROP,
   IP4_FIP64_N_NEXT
 } ip4_fip64_next_t;
@@ -41,6 +42,12 @@ typedef enum
   IP4_FIP64_TCP_UDP_N_NEXT
 } ip4_fip64_tcp_udp_next_t;
 
+typedef enum
+{
+  IP4_FIP64_FRAGMENTED_NEXT_IP6_LOOKUP,
+  IP4_FIP64_FRAGMENTED_NEXT_DROP,
+  IP4_FIP64_FRAGMENTED_N_NEXT
+} ip4_fip64_fragmented_next_t;
 
 //TODO: Find the right place in memory for this.
 /* *INDENT-OFF* */
@@ -399,6 +406,7 @@ ip4_fip64_tcp_udp (vlib_main_t * vm,
         frag_id0 = frag_id_4to6 (ip40->fragment_id);
         vlib_buffer_advance (p0,
                              sizeof (*ip40) - sizeof (*ip60) - sizeof (*frag0));
+        clib_warning("TCP/UDP first fragmented packet");
       }
       else
       {
@@ -423,6 +431,7 @@ ip4_fip64_tcp_udp (vlib_main_t * vm,
         frag0->fragment_offset_and_more =
           ip6_frag_hdr_offset_and_more (0, 1);
         ip60->protocol = IP_PROTOCOL_IPV6_FRAGMENTATION;
+        clib_warning("Set protocol to IP_PROTOCOL_IPV6_FRAGMENTATION");
         ip60->payload_length =
           u16_net_add (ip60->payload_length, sizeof (*frag0));
       }
@@ -449,22 +458,23 @@ ip4_fip64_tcp_udp (vlib_main_t * vm,
 
 static_always_inline void
 ip4_fip64_classify (vlib_buffer_t * p0, ip4_header_t * ip40,
-                    u16 ip4_len0, i32 * dst_port0,
+                    u16 ip4_len0,
                     u8 * error0, ip4_fip64_next_t * next0)
 {
-  if (PREDICT_TRUE (ip40->protocol == IP_PROTOCOL_TCP))
+  if (PREDICT_FALSE (ip4_get_fragment_offset (ip40))) {
+    *next0 = IP4_FIP64_NEXT_FIP64_FRAGMENTED;
+  }
+  else if (PREDICT_TRUE (ip40->protocol == IP_PROTOCOL_TCP))
   {
     vnet_buffer (p0)->fip64.checksum_offset = 36;
     *next0 = IP4_FIP64_NEXT_FIP64_TCP_UDP;
     *error0 = ip4_len0 < 40 ? FIP64_ERROR_MALFORMED : *error0;
-    *dst_port0 = (i32) * ((u16 *) u8_ptr_add (ip40, sizeof (*ip40) + 2));
   }
   else if (PREDICT_TRUE (ip40->protocol == IP_PROTOCOL_UDP))
   {
     vnet_buffer (p0)->fip64.checksum_offset = 26;
     *next0 = IP4_FIP64_NEXT_FIP64_TCP_UDP;
     *error0 = ip4_len0 < 28 ? FIP64_ERROR_MALFORMED : *error0;
-    *dst_port0 = (i32) * ((u16 *) u8_ptr_add (ip40, sizeof (*ip40) + 2));
   }
   else if (ip40->protocol == IP_PROTOCOL_ICMP)
   {
@@ -498,7 +508,6 @@ ip4_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
       ip4_fip64_next_t next0;
       u16 ip4_len0;
       u8 error0;
-      i32 dst_port0;
       fip64_ip4_t ip4key;
       bool lookup_success = false;
 
@@ -518,6 +527,13 @@ ip4_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
       {
         error0 = FIP64_ERROR_UNKNOWN;
         next0 = IP4_FIP64_NEXT_DROP;
+        clib_warning("Packet is too big: current_length: %d, \
+current_packet_length: %d \
+ip_version_and_header_length: %x",
+                     p0->current_length, ip4_len0,
+                     ip40->ip_version_and_header_length
+        );
+        p0->current_length = ip4_len0;
       }
       // Send src and dst ip6 address to next nodes
       vlib_buffer_advance (p0, -sizeof (ip4_fip64_pseudo_header_t));
@@ -553,8 +569,7 @@ ip4_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
         trace->ip4.dst_address = ip40->dst_address;
         trace->ip4.table_id = ip4key.table_id;
       }
-      dst_port0 = -1;
-      ip4_fip64_classify (p0, ip40, ip4_len0, &dst_port0, &error0, &next0);
+      ip4_fip64_classify (p0, ip40, ip4_len0, &error0, &next0);
 
       next0 = (error0 != FIP64_ERROR_NONE) ? IP4_FIP64_NEXT_DROP : next0;
       p0->error = error_node->errors[error0];
@@ -626,6 +641,7 @@ VLIB_REGISTER_NODE(ip4_fip64_node) = {
   .next_nodes = {
     [IP4_FIP64_NEXT_FIP64_ICMP] = "ip4-fip64-icmp",
     [IP4_FIP64_NEXT_FIP64_TCP_UDP] = "ip4-fip64-tcp-udp",
+    [IP4_FIP64_NEXT_FIP64_FRAGMENTED] = "ip4-map-t-fragmented",
     [IP4_FIP64_NEXT_DROP] = "error-drop",
   },
 };
