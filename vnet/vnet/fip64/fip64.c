@@ -21,18 +21,32 @@ fip64_main_t _fip64_main;
 static clib_error_t *
 fip64_init (vlib_main_t * vm)
 {
-  return fip64_main_init(&_fip64_main, &ip6_main, &ip4_main);
+  return fip64_main_init(vm, &_fip64_main, &ip6_main, &ip4_main);
 }
 
 clib_error_t *
-fip64_main_init(fip64_main_t * fip64_main, ip6_main_t * ip6_main, ip4_main_t * ip4_main)
+fip64_main_init(vlib_main_t *vm, fip64_main_t * fip64_main, ip6_main_t * ip6_main, ip4_main_t * ip4_main)
 {
-  fip64_main->testing = false;
+  fip64_main->testing = vm == 0;
   fip64_main->ip6_main = ip6_main;
   fip64_main->ip4_main = ip4_main;
   fip64_main->fip6_mapping_hash = hash_create_mem(0, sizeof(ip6_address_t), sizeof(fip64_mapping_t));
   fip64_main->fixed4_mapping_hash = hash_create_mem(0, sizeof(fip64_ip4key_t), sizeof(fip64_mapping_t));
   fip64_main->vrf_tenant_hash = hash_create_mem(0, sizeof(u32), sizeof(fip64_tenant_t));
+  if (!fip64_main->testing)
+  {
+    u32 source_if_or_table = 0, // TODO
+        dest_if_or_table = 1; // TODO
+    fip64_main->pkinject = pkinject_alloc (vm,
+                    "ip4-input",
+                    source_if_or_table,
+                    dest_if_or_table);
+    CLIB_ERROR_ASSERT (fip64_main->pkinject != 0);
+  }
+  else
+  {
+    fip64_main->pkinject = 0;
+  }
   return 0;
 }
 
@@ -124,7 +138,7 @@ fip64_del_all_mappings(fip64_mapping_t * mapping)
   return 0;
 }
 
-bool
+fip64_lookup_result_t
 fip64_lookup_ip6_to_ip4(fip64_main_t * fip64_main,
                         ip6_address_t * ip6_src, ip6_address_t * ip6_dst,
                         fip64_ip4_t * ip4)
@@ -134,7 +148,7 @@ fip64_lookup_ip6_to_ip4(fip64_main_t * fip64_main,
   if (!p)
   {
     // no such fip configured
-    return false;
+    return FIP64_LOOKUP_FAILED;
   }
 
   fip64_mapping_t *mapping = (fip64_mapping_t*) *p;
@@ -148,14 +162,14 @@ fip64_lookup_ip6_to_ip4(fip64_main_t * fip64_main,
   if (p)
   {
     ip4->src_address = *(ip4_address_t*) *p;
-    return true;
+    return FIP64_LOOKUP_IN_CACHE;
   }
 
   // allocate new mapping
   if (!fip64_pool_available(tenant->pool))
   {
     // TODO: expire mappings to free up some addresses
-    return false;
+    return FIP64_LOOKUP_FAILED;
   }
 
   ip4->src_address = fip64_pool_get(tenant->pool, ip6_src);
@@ -163,19 +177,20 @@ fip64_lookup_ip6_to_ip4(fip64_main_t * fip64_main,
   if (!ip4->src_address.as_u32)
   {
     // no address available even after expiration
-    return false;
+    return FIP64_LOOKUP_FAILED;
   }
 
   if (NULL != fip64_add_mapping(mapping, ip6_src, ip4->src_address))
   {
     // failed when saving 4 <-> 6 mapping, return ip4 address to pool
     fip64_pool_release(tenant->pool, ip4->src_address);
-    return false;
+    return FIP64_LOOKUP_FAILED;
   }
-  return true;
+
+  return FIP64_LOOKUP_ALLOCATED;
 }
 
-bool
+fip64_lookup_result_t
 fip64_lookup_ip4_to_ip6(fip64_main_t * fip64_main,
                         fip64_ip4_t * ip4,
                         ip6_address_t * ip6_src, ip6_address_t * ip6_dst)
@@ -189,7 +204,7 @@ fip64_lookup_ip4_to_ip6(fip64_main_t * fip64_main,
   if (!p)
   {
     // no such fip configured
-    return false;
+    return FIP64_LOOKUP_FAILED;
   }
 
   fip64_mapping_t *mapping = (fip64_mapping_t*) *p;
@@ -198,9 +213,9 @@ fip64_lookup_ip4_to_ip6(fip64_main_t * fip64_main,
   {
     *ip6_dst = mapping->fip6;
     *ip6_src = *(ip6_address_t*) *p;
-    return true;
+    return FIP64_LOOKUP_IN_CACHE;
   }
-  return false;
+  return FIP64_LOOKUP_FAILED;
 }
 
 static void

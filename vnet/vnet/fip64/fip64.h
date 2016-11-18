@@ -20,6 +20,7 @@
 #include <vlib/vlib.h>
 
 #include "fip64_pool.h"
+#include "pkinject.h"
 
 typedef struct {
   ip4_address_t src_address;
@@ -56,6 +57,7 @@ typedef struct {
   uword *fixed4_mapping_hash; /* fixed4/vrf to fip64 mapping */
   uword *fip6_mapping_hash; /* fip6 to fip64 mapping */
   bool testing;
+  pkinject_t *pkinject;
 } fip64_main_t;
 
 typedef enum
@@ -64,11 +66,17 @@ typedef enum
   FIP64_RECEIVER
 } fip64_dir_e;
 
+typedef enum {
+  FIP64_LOOKUP_FAILED = 0,
+  FIP64_LOOKUP_IN_CACHE,
+  FIP64_LOOKUP_ALLOCATED
+} fip64_lookup_result_t;
+
 /**
  * Initial fip64 main structure. Visible for unit tests.
  */
 extern clib_error_t *
-fip64_main_init(fip64_main_t * fip64_main, ip6_main_t * ip6_main, ip4_main_t * ip4_main);
+fip64_main_init(vlib_main_t *vm, fip64_main_t * fip64_main, ip6_main_t * ip6_main, ip4_main_t * ip4_main);
 
 /**
  * Add an IP6 mapping for a fixed IP4
@@ -106,7 +114,7 @@ fip64_delete(fip64_main_t *fip64_main, ip6_address_t *fip6);
  * @param[out] ip4 Pointer where to copy the source, destination IP4 addresses
  *             and VRF table id for ip4 adjacency
  */
-extern bool
+extern fip64_lookup_result_t
 fip64_lookup_ip6_to_ip4(fip64_main_t * fip64_main,
                         ip6_address_t * ip6_src, ip6_address_t * ip6_dst,
                         fip64_ip4_t * ip4);
@@ -122,7 +130,7 @@ fip64_lookup_ip6_to_ip4(fip64_main_t * fip64_main,
  * @param[out] ip6_src Pointer where to copy the source IP6 address.
  * @param[out] ip6_dst Pointer where to copy the destination IP6 address.
  */
-extern bool
+extern fip64_lookup_result_t
 fip64_lookup_ip4_to_ip6(fip64_main_t * fip64_main,
                         fip64_ip4_t * ip4,
                         ip6_address_t * ip6_src, ip6_address_t * ip6_dst);
