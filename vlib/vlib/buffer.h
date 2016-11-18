@@ -52,7 +52,7 @@
 #define VLIB_BUFFER_PRE_DATA_SIZE	RTE_PKTMBUF_HEADROOM
 #else
 #include <vlib/config.h>	/* for __PRE_DATA_SIZE */
-#define VLIB_BUFFER_DATA_SIZE		(512)
+#define VLIB_BUFFER_DATA_SIZE		(2048)
 #define VLIB_BUFFER_PRE_DATA_SIZE	__PRE_DATA_SIZE
 #endif
 

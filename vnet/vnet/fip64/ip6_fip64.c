@@ -37,6 +37,12 @@ typedef enum
   IP6_FIP64_ICMP_N_NEXT
 } ip6_fip64_icmp_next_t;
 
+typedef enum
+{
+  IP6_FIP64_FRAGMENTED_NEXT_IP4_LOOKUP,
+  IP6_FIP64_FRAGMENTED_N_NEXT
+} ip6_fip64_fragmented_next_t;
+
 static_always_inline
 int ip6_parse(const ip6_header_t *ip6, u32 buff_len,
               u8 *l4_protocol, u16 *l4_offset, u16 *frag_hdr_offset)
@@ -75,7 +81,6 @@ ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
           ip6_header_t *ip60;
           u8 error0;
           u32 l4_len0;
-          i32 src_port0;
           ip6_frag_hdr_t *frag0;
           fip64_ip6_next_t next0 = 0;
 
@@ -131,9 +136,9 @@ ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
             {
               error0 = FIP64_ERROR_MALFORMED;
               next0 = IP6_FIP64_NEXT_DROP;
+              clib_warning ("ip6_parse returned error, drop the packet");
             }
 
-          src_port0 = -1;
           l4_len0 = (u32) clib_net_to_host_u16 (ip60->payload_length) +
             sizeof (*ip60) - vnet_buffer (p0)->map_t.v6.l4_offset;
           frag0 =
@@ -141,13 +146,9 @@ ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
                                            vnet_buffer (p0)->map_t.
                                            v6.frag_offset);
 
-
           if (PREDICT_FALSE (vnet_buffer (p0)->map_t.v6.frag_offset &&
                              ip6_frag_hdr_offset (frag0)))
             {
-              // MIDOTODO: check port
-              src_port0 = 12345; //ip6_map_fragment_get (ip60, frag0, d0);
-              error0 = (src_port0 != -1) ? error0 : FIP64_ERROR_FRAGMENT_MEMORY;
               next0 = IP6_FIP64_NEXT_MAPT_FRAGMENTED;
             }
           else
@@ -160,10 +161,6 @@ ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
               vnet_buffer (p0)->map_t.checksum_offset =
                 vnet_buffer (p0)->map_t.v6.l4_offset + 16;
               next0 = IP6_FIP64_NEXT_MAPT_TCP_UDP;
-              src_port0 =
-                (i32) *
-                ((u16 *)
-                 u8_ptr_add (ip60, vnet_buffer (p0)->map_t.v6.l4_offset));
             }
           else
             if (PREDICT_TRUE
@@ -175,10 +172,6 @@ ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
               vnet_buffer (p0)->map_t.checksum_offset =
                 vnet_buffer (p0)->map_t.v6.l4_offset + 6;
               next0 = IP6_FIP64_NEXT_MAPT_TCP_UDP;
-              src_port0 =
-                (i32) *
-                ((u16 *)
-                 u8_ptr_add (ip60, vnet_buffer (p0)->map_t.v6.l4_offset));
             }
           else if (vnet_buffer (p0)->map_t.v6.l4_protocol ==
                    IP_PROTOCOL_ICMP6)
@@ -187,19 +180,6 @@ ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
                 l4_len0 <
                 sizeof (icmp46_header_t) ? FIP64_ERROR_MALFORMED : error0;
               next0 = IP6_FIP64_NEXT_MAPT_ICMP;
-              if (((icmp46_header_t *)
-                   u8_ptr_add (ip60,
-                               vnet_buffer (p0)->map_t.v6.l4_offset))->code ==
-                  ICMP6_echo_reply
-                  || ((icmp46_header_t *)
-                      u8_ptr_add (ip60,
-                                  vnet_buffer (p0)->map_t.v6.
-                                  l4_offset))->code == ICMP6_echo_request)
-                src_port0 =
-                  (i32) *
-                  ((u16 *)
-                   u8_ptr_add (ip60,
-                               vnet_buffer (p0)->map_t.v6.l4_offset + 6));
             }
           else
             {
@@ -403,6 +383,9 @@ _ip6_fip64_icmp (vlib_main_t *vm,
       //No extensions headers allowed here
       //TODO: SR header
       *error = FIP64_ERROR_MALFORMED;
+      if (ip6->protocol == IP_PROTOCOL_IPV6_FRAGMENTATION) {
+        clib_warning("First fragment of ICMP is unhandled, fixme");
+      }
       return;
     }
 
@@ -590,8 +573,6 @@ ip6_fip64_icmp (vlib_main_t * vm,
 	  vlib_buffer_t *p0;
 	  u8 error0;
 	  ip6_fip64_icmp_next_t next0;
-	  //map_domain_t *d0;
-	  //	  u16 len0;
 
 	  pi0 = to_next[0] = from[0];
 	  from += 1;
@@ -643,6 +624,7 @@ VLIB_REGISTER_NODE(ip6_fip64_icmp_node) = {
       [IP6_FIP64_ICMP_NEXT_DROP] = "error-drop",
   },
 };
+/* *INDENT-ON* */
 
 /* *INDENT-OFF* */
 VLIB_REGISTER_NODE(ip6_fip64_node) = {
