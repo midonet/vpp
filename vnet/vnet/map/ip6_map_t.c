@@ -236,6 +236,7 @@ _ip6_map_t_icmp (map_domain_t * d, vlib_buffer_t * p, u8 * error)
     {
       //No extensions headers allowed here
       //TODO: SR header
+      clib_warning("Bad protocol: ip6->protocol: %d", ip6->protocol);
       *error = MAP_ERROR_MALFORMED;
       return;
     }
