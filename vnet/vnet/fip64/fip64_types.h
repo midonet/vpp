@@ -22,6 +22,8 @@
 #include <vnet/ip/ip.h>
 #include <vlib/vlib.h>
 
+#include "pkinject.h"
+
 typedef struct {
   u64 msb, lsb;
 } fip64_uuid_t;
@@ -92,6 +94,7 @@ typedef struct {
   uword *fip6_mapping_hash; /* fip6 to fip64 mapping */
   uword *uuid_tenant_hash; /* uuid to tenant hash */
   bool testing;
+  pkinject_t *pkinject;
 } fip64_main_t;
 
 typedef enum
@@ -99,6 +102,13 @@ typedef enum
   FIP64_SENDER,
   FIP64_RECEIVER
 } fip64_dir_e;
+
+typedef enum {
+  FIP64_LOOKUP_FAILED = 0,
+  FIP64_LOOKUP_IN_CACHE,
+  FIP64_LOOKUP_ALLOCATED
+} fip64_lookup_result_t;
+
 
 /*
  * MAP Error counters/messages

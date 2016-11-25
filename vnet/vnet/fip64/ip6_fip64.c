@@ -62,29 +62,47 @@ int ip6_parse(const ip6_header_t *ip6, u32 buff_len,
 }
 
 /* sample function to generate an ip4 udp packet
- * src: 1.1.1.1 port 11111
- * dst: 10.4.4.4 port 22222
+ * src: 172.16.0.2 port 11111
+ * dst: 172.16.0.1 port 11111
  * payload: "Hello world!"
  */
 static u16
 build_report_packet(u8 *data, void *context)
 {
+  // TODO
+  // void **context_array = (void**)context;
+  // ip6_address_t *ip6 = (ip6_address_t*) context_array[0];
+  // ip4_address_t *ip4 = (ip4_address_t*) context_array[1];
+
+  //ethernet_header_t *eth = (ethernet_header_t *) data;
   ip4_header_t *ip = (ip4_header_t*) data;
   udp_header_t *udp = (udp_header_t*) &ip[1];
   u8 *body = (u8*) &udp[1];
 
   memset(data, 0, body - data);
+
+  //eth->type = clib_host_to_net_u16(0x0800);
+  //memset (eth->dst_address, 0xff, 6);
+
+  // TODO: This is crashing, maybe format() doesn't like a static buffer
+  // u8 *payload = format(body, "Hey! There's a mapping from %U to %U",
+  //                format_ip6_address, ip6,
+  //                format_ip4_address, ip4);
+  // *(payload++) = 0; // zero-terminate string in packet, as it is printed at the other end
+  //size_t payload_length = payload - body;
+
   char *payload = "Hello world!";
-  size_t payload_length = strlen(payload);
+  size_t payload_length = strlen(payload) + 1; // +1 to include terminator
+  memcpy(body, payload, payload_length);
 
   ip->ip_version_and_header_length = 0x45;
   ip->ttl = 254;
   ip->protocol = IP_PROTOCOL_UDP;
-  ip->src_address.as_u32 = clib_host_to_net_u32(0x01010101);
-  ip->dst_address.as_u32 = clib_host_to_net_u32(0x0a040404);
+  ip->src_address.as_u32 = clib_host_to_net_u32(0xAC100002);
+  ip->dst_address.as_u32 = clib_host_to_net_u32(0xAC100001);
 
-  udp->src_port = clib_host_to_net_u16 (11111);
-  udp->dst_port = clib_host_to_net_u16 (22222);
+  udp->src_port = clib_host_to_net_u16 (FIP64_CONTROL_PORT_NUMBER);
+  udp->dst_port = clib_host_to_net_u16 (FIP64_CONTROL_PORT_NUMBER);
 
   size_t length = payload_length + sizeof(*udp);
   udp->length = clib_host_to_net_u16 (length);
@@ -102,13 +120,14 @@ build_report_packet(u8 *data, void *context)
   length += sizeof(*ip);
   ip->length = clib_host_to_net_u16 (length);
   ip->checksum = ip4_header_checksum (ip);
-  return length;
+  return length /* + sizeof(*eth)*/;
 }
 
 static uword
 ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
 {
   bool packets_injected = false;
+  pkinject_t *injector = _fip64_main.pkinject;
   u32 n_left_from, *from, next_index, *to_next, n_left_to_next;
   vlib_node_runtime_t *error_node = vlib_node_get_runtime (vm,
                                                            ip6_fip64_node.index);
@@ -162,11 +181,12 @@ ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
               // otherwise the first packet is dropped because
               // of address resolution.
             case FIP64_LOOKUP_ALLOCATED:
+              if (injector != 0)
               {
                 void *context[2];
                 context[0] = &ip6->src_address;
-                context[1] = &ip4_mapping;
-                pkinject_by_callback (_fip64_main.pkinject,
+                context[1] = &ip4_mapping.src_address;
+                pkinject_by_callback (injector,
                                       build_report_packet,
                                       context,
                                       is_traced? PKINJECT_FLAG_TRACE : 0);
@@ -271,7 +291,7 @@ ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
     }
   if (packets_injected)
   {
-    pkinject_flush (_fip64_main.pkinject);
+    pkinject_flush (injector);
   }
 
   return frame->n_vectors;

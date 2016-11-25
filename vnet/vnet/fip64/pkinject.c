@@ -19,21 +19,14 @@
 
 pkinject_t*
 pkinject_alloc (vlib_main_t *vm,
-                char *target_node,
+                u32 target_node_index,
                 u32 rx_if_index,
                 u32 tx_if_index)
 {
-  vlib_node_t *node = vlib_get_node_by_name (vm, (u8*)target_node);
-  if (!node)
-  {
-    clib_warning ("pkinject_alloc: Node '%s' not found", target_node);
-    return 0;
-  }
-
   pkinject_t *p = clib_mem_alloc(sizeof(pkinject_t));
 
   p->vm = vm;
-  p->target_node_index = node->index;
+  p->target_node_index = target_node_index;
   p->sw_if_index[VLIB_RX] = rx_if_index;
   p->sw_if_index[VLIB_TX] = tx_if_index;
   p->current_frame = 0;

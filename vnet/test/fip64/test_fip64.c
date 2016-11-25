@@ -134,7 +134,7 @@ test_reuse_impl (u32 start, u32 end)
 
   ip6_address_t ip6_start_src_address;
   init_ip_mains(&ip6_main, &ip4_main);
-  fip64_main_init(&fip64_main, &ip6_main, &ip4_main);
+  fip64_main_init(NULL, &fip64_main, &ip6_main, &ip4_main);
 
   // disable adjacencies under testing (causing crash)
   fip64_main.testing = true;
