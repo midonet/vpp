@@ -15,6 +15,7 @@
 
 #include "fip64.h"
 #include <vnet/ip/lookup.h>
+#include <vnet/ip/udp.h>
 
 fip64_main_t _fip64_main;
 
@@ -33,20 +34,12 @@ fip64_main_init(vlib_main_t *vm, fip64_main_t * fip64_main, ip6_main_t * ip6_mai
   fip64_main->fip6_mapping_hash = hash_create_mem(0, sizeof(ip6_address_t), sizeof(fip64_mapping_t));
   fip64_main->fixed4_mapping_hash = hash_create_mem(0, sizeof(fip64_ip4key_t), sizeof(fip64_mapping_t));
   fip64_main->vrf_tenant_hash = hash_create_mem(0, sizeof(u32), sizeof(fip64_tenant_t));
-  if (!fip64_main->testing)
-  {
-    u32 source_if_or_table = 0, // TODO
-        dest_if_or_table = 1; // TODO
-    fip64_main->pkinject = pkinject_alloc (vm,
-                    "ip4-input",
-                    source_if_or_table,
-                    dest_if_or_table);
-    CLIB_ERROR_ASSERT (fip64_main->pkinject != 0);
-  }
-  else
-  {
-    fip64_main->pkinject = 0;
-  }
+
+  // notification packets disabled until explicitly enabled with `fip64 sync`
+  fip64_main->pkinject = 0;
+
+  udp_register_dst_port (vm, FIP64_CONTROL_PORT_NUMBER,
+                  control_fip64_node.index, 1 /* is_ipv4 */);
   return 0;
 }
 
@@ -526,6 +519,68 @@ fip64_del_command_fn (vlib_main_t * vm, unformat_input_t * input,
   return 0;
 }
 
+u32
+get_fip_index_by_table_id(u32 table_id) {
+  u32 result = find_ip4_fib_by_table_index_or_id (&ip4_main, table_id, 0) - ip4_main.fibs;
+  clib_warning ("lookup table %u to %u", table_id, result);
+  return result;
+}
+
+static clib_error_t*
+fip64_sync_enable (vlib_main_t * vm, vnet_main_t *vnm, u32 iface_id)
+{
+  fip64_main_t *fip64_main = &_fip64_main;
+  u32 source_if_or_table = 1,
+      dest_if_or_table = get_fip_index_by_table_id (999);
+                          //iface_id;
+
+  if (fip64_main->pkinject != 0)
+  {
+    return clib_error_return (0, "Sync already enabled.");
+  }
+
+  //vnet_hw_interface_t * hw = vnet_get_sup_hw_interface (vnm, iface_id);
+  // HACK:
+  //dest_if_or_table = hw->sw_if_index;
+
+  vlib_node_t *node = vlib_get_node_by_name (vm, (u8*)"ip4-input");
+
+  fip64_main->pkinject = pkinject_alloc (vm,
+                                         //hw->output_node_index,
+                                         node->index,
+                                         source_if_or_table,
+                                         dest_if_or_table);
+  if (fip64_main->pkinject == 0)
+    return clib_error_return (0, "Unable to create packet injection");
+
+  return 0;
+}
+
+static clib_error_t*
+fip64_sync_command_fn (vlib_main_t * vm, unformat_input_t * input,
+                       vlib_cli_command_t * cmd)
+{
+  vnet_main_t *vnm = vnet_get_main ();
+  clib_error_t *error = 0;
+  unformat_input_t _line_input, *line_input = &_line_input;
+  u32 iface_id = ~0;
+
+  if (!unformat_user (input, unformat_line_input, line_input))
+    return 0;
+
+  if (!unformat (line_input, "%U", unformat_vnet_hw_interface, vnm, &iface_id))
+  {
+    error = clib_error_return (0, "invalid input: expected interface name.");
+    goto end;
+  }
+
+  error = fip64_sync_enable (vm, vnm, iface_id);
+
+end:
+  unformat_free (line_input);
+  return error;
+}
+
 static clib_error_t*
 fip64_show_command_fn (vlib_main_t * vm, unformat_input_t * input,
                       vlib_cli_command_t * cmd)
@@ -616,6 +671,15 @@ VLIB_CLI_COMMAND(fip64_del_command, static) = {
   .function = fip64_del_command_fn,
 };
 /* *INDENT-ON* */
+
+/* *INDENT-OFF* */
+VLIB_CLI_COMMAND(fip64_sync_command, static) = {
+  .path = "fip64 sync",
+  .short_help = "<interface>",
+  .function = fip64_sync_command_fn,
+};
+/* *INDENT-ON* */
+
 
 /* *INDENT-OFF* */
 VLIB_INIT_FUNCTION(fip64_init)
