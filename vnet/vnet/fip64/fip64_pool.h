@@ -25,6 +25,8 @@
 
 #include "fip64_types.h"
 
+#define FIP64_CONTROL_PORT_NUMBER 11111
+
 /* fip64_pool_alloc(start, end)
  * allocates a new pool with the addresses in the range start to end,
  * both included.
