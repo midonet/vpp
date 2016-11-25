@@ -22,6 +22,8 @@
 #include "fip64_pool.h"
 #include "pkinject.h"
 
+#define FIP64_CONTROL_PORT_NUMBER 11111
+
 typedef struct {
   ip4_address_t src_address;
   ip4_address_t dst_address;
@@ -198,6 +200,9 @@ extern vlib_node_registration_t ip4_fip64_tcp_udp_node;
 
 extern vlib_node_registration_t ip6_fip64_node;
 extern vlib_node_registration_t ip6_fip64_icmp_node;
+
+extern vlib_node_registration_t control_fip64_node;
+
 extern ip4_main_t ip4_main;
 
 /*

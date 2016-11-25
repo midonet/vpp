@@ -39,7 +39,8 @@ typedef u16 ( * pkinject_generator_t ) ( u8 *buffer, void *context );
 
 /* pkinject_alloc
  * allocates a packet injector
- * @param target_node name of node which will receive the packets (ex: "ip4-input")
+ * @param target_node_index index of node which will receive the packets.
+ *                    (see vlib_get_node_by_name or vnet_get_sup_hw_interface)
  * @param rx_if_index index of interface the packet was received from?
  *                    Or table id. Zero seems good.
  * @param tx_if_index vrf table id the packets will be routed to.
@@ -48,7 +49,7 @@ typedef u16 ( * pkinject_generator_t ) ( u8 *buffer, void *context );
  */
 pkinject_t*
 pkinject_alloc (vlib_main_t *vm,
-                char *target_node,
+                u32 target_node_index,
                 u32 rx_if_index,
                 u32 tx_if_index);
 

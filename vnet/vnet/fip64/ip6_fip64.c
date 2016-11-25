@@ -62,29 +62,34 @@ int ip6_parse(const ip6_header_t *ip6, u32 buff_len,
 }
 
 /* sample function to generate an ip4 udp packet
- * src: 1.1.1.1 port 11111
- * dst: 10.4.4.4 port 22222
+ * src: 192.168.0.1 port 11111
+ * dst: 192.168.0.2 port 11111
  * payload: "Hello world!"
  */
 static u16
 build_report_packet(u8 *data, void *context)
 {
-  ip4_header_t *ip = (ip4_header_t*) data;
+  ethernet_header_t *eth = (ethernet_header_t *) data;
+  ip4_header_t *ip = (ip4_header_t*) &eth[1];
   udp_header_t *udp = (udp_header_t*) &ip[1];
   u8 *body = (u8*) &udp[1];
 
   memset(data, 0, body - data);
+
+  eth->type = clib_host_to_net_u16(0x0800);
+  memset (eth->dst_address, 0xff, 6);
+
   char *payload = "Hello world!";
-  size_t payload_length = strlen(payload);
+  size_t payload_length = strlen(payload) + 1;
 
   ip->ip_version_and_header_length = 0x45;
   ip->ttl = 254;
   ip->protocol = IP_PROTOCOL_UDP;
-  ip->src_address.as_u32 = clib_host_to_net_u32(0x01010101);
-  ip->dst_address.as_u32 = clib_host_to_net_u32(0x0a040404);
+  ip->src_address.as_u32 = clib_host_to_net_u32(0xC0A80001);
+  ip->dst_address.as_u32 = clib_host_to_net_u32(0xC0A80002);
 
-  udp->src_port = clib_host_to_net_u16 (11111);
-  udp->dst_port = clib_host_to_net_u16 (22222);
+  udp->src_port = clib_host_to_net_u16 (FIP64_CONTROL_PORT_NUMBER);
+  udp->dst_port = clib_host_to_net_u16 (FIP64_CONTROL_PORT_NUMBER);
 
   size_t length = payload_length + sizeof(*udp);
   udp->length = clib_host_to_net_u16 (length);
@@ -102,13 +107,14 @@ build_report_packet(u8 *data, void *context)
   length += sizeof(*ip);
   ip->length = clib_host_to_net_u16 (length);
   ip->checksum = ip4_header_checksum (ip);
-  return length;
+  return length + sizeof(*eth);
 }
 
 static uword
 ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
 {
   bool packets_injected = false;
+  pkinject_t *injector = _fip64_main.pkinject;
   u32 n_left_from, *from, next_index, *to_next, n_left_to_next;
   vlib_node_runtime_t *error_node = vlib_node_get_runtime (vm,
                                                            ip6_fip64_node.index);
@@ -162,11 +168,12 @@ ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
               // otherwise the first packet is dropped because
               // of address resolution.
             case FIP64_LOOKUP_ALLOCATED:
+              if (injector != 0)
               {
                 void *context[2];
                 context[0] = &ip6->src_address;
                 context[1] = &ip4_mapping;
-                pkinject_by_callback (_fip64_main.pkinject,
+                pkinject_by_callback (injector,
                                       build_report_packet,
                                       context,
                                       is_traced? PKINJECT_FLAG_TRACE : 0);
@@ -271,7 +278,7 @@ ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
     }
   if (packets_injected)
   {
-    pkinject_flush (_fip64_main.pkinject);
+    pkinject_flush (injector);
   }
 
   return frame->n_vectors;
