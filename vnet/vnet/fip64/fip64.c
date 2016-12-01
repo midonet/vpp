@@ -96,7 +96,8 @@ fip64_add_mapping(fip64_mapping_t * mapping,
 {
   ip6_address_t *ip6 = clib_mem_alloc(sizeof(ip6_address_t));
   fip64_ip6_ip4_value_t *ip4_value = clib_mem_alloc(sizeof(ip4_input));
-  if (ip6 == 0 || ip4_value == 0) {
+  if (ip6 == 0 || ip4_value == 0)
+  {
     return clib_error_return (0, "Out of memory");
   }
   clib_memcpy(ip6, ip6_input, sizeof(ip6_address_t));
@@ -163,10 +164,23 @@ fip64_lookup_ip6_to_ip4(fip64_main_t * fip64_main,
   }
 
   // allocate new mapping
-  fip64_pool_get(tenant->pool, ip6_src, &ip4_value);
+  bool remove_old = fip64_pool_get(tenant->pool, ip6_src, &ip4_value);
   CLIB_ERROR_ASSERT(ip4_value.ip4_src.as_u32 != 0);
   ip4->src_address = ip4_value.ip4_src;
- 
+  if (remove_old)
+  {
+    uword *p = hash_get_mem(mapping->ip4_ip6_hash, &ip4->src_address);
+    CLIB_ERROR_ASSERT(p != 0);
+    ip6_address_t *ip6_to_del = (ip6_address_t*) *p;
+    p = hash_get_mem(mapping->ip6_ip4_hash, ip6_to_del);
+    CLIB_ERROR_ASSERT(p != 0);
+    fip64_ip6_ip4_value_t *ip4_to_del = (fip64_ip6_ip4_value_t*) *p;
+
+    clib_warning("Expiring mapping: %U -> %U",
+      format_ip6_address, ip6_to_del,
+      format_ip4_address, &ip4_to_del->ip4_src);
+    cleanup_entry(mapping, ip6_to_del, ip4_to_del);
+  }
   if (NULL != fip64_add_mapping(mapping, ip6_src, ip4_value))
   {
     // failed when saving 4 <-> 6 mapping, return ip4 address to pool
@@ -282,7 +296,8 @@ fip64_delete(fip64_main_t *fip64_main,
              ip6_address_t *fip6)
 {
   uword *p = hash_get_mem(fip64_main->fip6_mapping_hash, fip6);
-  if (p == 0) {
+  if (p == 0)
+  {
     return clib_error_return (0, "Non-existing FIP64: %U", format_ip6_address, fip6);
   }
 
@@ -466,7 +481,8 @@ fip64_add_command_fn (vlib_main_t * vm, unformat_input_t * input,
 
   host_pool_start = clib_net_to_host_u32(pool_start.as_u32);
   host_pool_end = clib_net_to_host_u32(pool_end.as_u32);
-  if (host_pool_end && host_pool_end < host_pool_start) {
+  if (host_pool_end && host_pool_end < host_pool_start)
+  {
       return clib_error_return_code(0, 1, 0, "Pool end must be at least pool \
 start, got: %U - %U", format_ip4_address, &host_pool_start,
                       format_ip4_address, &host_pool_end);
