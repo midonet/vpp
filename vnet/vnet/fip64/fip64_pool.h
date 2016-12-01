@@ -16,7 +16,9 @@
 #ifndef included_fip64_pool_h
 #define included_fip64_pool_h
 
+#include <vppinfra/error.h>
 #include <vppinfra/bitmap.h>
+#include <vppinfra/dlist.h>
 #include <vnet/vnet.h>
 #include <vnet/ip/ip.h>
 #include <vnet/ip/ip4.h>
@@ -36,19 +38,27 @@ fip64_pool_alloc (ip4_address_t start, ip4_address_t end);
 void
 fip64_pool_free (fip64_pool_t* pool);
 
-/* fip64_pool_get(pool, ip6)
+/* fip64_pool_get(pool, ip6, ip4_output)
  * returns an ipv4 mapping for the address ip6.
- * If there are no addresses left, returns the zero address.
+ * If there are no addresses left, "expires" the LRU mapping
+ * and uses it
  */
-ip4_address_t
-fip64_pool_get (fip64_pool_t* pool, ip6_address_t *ip6);
+void
+fip64_pool_get (fip64_pool_t* pool, ip6_address_t *ip6,
+                fip64_ip6_ip4_value_t *ip4_output);
 
-/* fip64_pool_release(pool, ip4)
- * marks the ip4 address as available. Returns false is the
- * address was not in use.
+/* fip64_pool_release(pool, ip4_value)
+ * marks the ip4 address as available and removes corresponding entry from lru list.
+ * Returns false if the address was not in use.
  */
 bool
-fip64_pool_release (fip64_pool_t* pool, ip4_address_t ip4);
+fip64_pool_release (fip64_pool_t* pool, fip64_ip6_ip4_value_t ip4_value);
+
+/* fip64_pool_lru_update(pool, ip4_value)
+ * moves given entry to the end of lru list
+ */
+void
+fip64_pool_lru_update(fip64_pool_t* pool, fip64_ip6_ip4_value_t *ip4_value);
 
 /* fip64_pool_available(pool)
  * returns the number of addresses available in the pool
