@@ -60,45 +60,90 @@ fip64_pool_alloc (ip4_address_t start, ip4_address_t end)
   return pool;
 }
 
+/* Marks entry with given index as used and pushes corresponding
+ * address to the the end of lru list, making it most recently used
+ */
 void
+fip64_pool_add_entry(fip64_pool_t *pool,
+                     uword index,
+                     u32 lru_position)
+{
+  -- pool->num_free;
+  clib_bitmap_set(pool->used_map, index, 1);
+  clib_dlist_addtail (pool->list_pool, 0, lru_position);
+}
+
+/* get free entry from pool
+ * return false if pool is full, true otherwise
+ */
+bool
+fip64_pool_get_free (fip64_pool_t *pool, ip6_address_t *ip6,
+                     fip64_ip6_ip4_value_t *ip4_output)
+{
+  uword index = ~0;
+  uword *bitmap = pool->used_map;
+  if (fip64_pool_available(pool))
+    {
+      index = hash_memory(ip6->as_u8, sizeof(ip6->as_u8), 0)
+        % pool->size;
+
+      if (clib_bitmap_get(bitmap, index) != 0)
+        {
+          uword prev = index;
+          index = clib_bitmap_next_clear(bitmap, prev);
+          /* clib_bitmap_next_clear can return a bit after the end some times,
+           * as it takes full words and forgets about the exact number of bits.
+           * Because of this, two conditions have to be checked for error
+           */
+          if (index >= pool->size || index == prev)
+            {
+              index = clib_bitmap_first_clear(bitmap);
+              CLIB_ERROR_ASSERT (index < pool->size
+                                  && clib_bitmap_get(bitmap, index) == 0);
+            }
+        }
+      dlist_elt_t *new_lru_entry = 0;
+      pool_get (pool->list_pool, new_lru_entry);
+      ip4_output->lru_position = new_lru_entry - pool->list_pool;
+      clib_dlist_init (pool->list_pool, ip4_output->lru_position);
+      ip4_output->ip4_src.as_u32 = clib_host_to_net_u32(pool->start_address + index);
+      new_lru_entry->value = ip4_output->ip4_src.as_u32;
+      fip64_pool_add_entry(pool, index, ip4_output->lru_position);
+      return true;
+    }
+  return false;
+}
+
+/* Expires the oldest mapping and use it's ip4 address for the
+ * current client
+ */
+void
+fip64_pool_expire_and_get(fip64_pool_t *pool,
+                          fip64_ip6_ip4_value_t *ip4_output)
+{
+  dlist_elt_t *head = pool_elt_at_index (pool->list_pool, 0);
+  uword index = ~0;
+  u32 oldest_position = head->next;
+  CLIB_ERROR_ASSERT(oldest_position != ~0);
+  dlist_elt_t *oldest_entry = pool_elt_at_index(pool->list_pool,
+                                                oldest_position);
+  ip4_output->lru_position = oldest_position;
+  ip4_output->ip4_src.as_u32 = oldest_entry->value;
+  fip64_pool_release(pool, *ip4_output);
+  index = clib_net_to_host_u32 (oldest_entry->value) - pool->start_address;
+  fip64_pool_add_entry(pool, index, ip4_output->lru_position);
+}
+
+bool
 fip64_pool_get (fip64_pool_t *pool, ip6_address_t *ip6,
                 fip64_ip6_ip4_value_t *ip4_output)
 {
-
-  ip4_output->lru_position = 0;
-  // availability should've been checked before calling this method
-  // in order to expire mappings if needed.
-  if (!fip64_pool_available(pool))
+  if (!fip64_pool_get_free(pool, ip6, ip4_output))
     {
-      ip4_output->ip4_src.as_u32 = 0;
-      return;
+      fip64_pool_expire_and_get(pool, ip4_output);
+      return true;
     }
-
-  uword *bitmap = pool->used_map;
-
-  uword index = hash_memory(ip6->as_u8, sizeof(ip6->as_u8), 0)
-                  % pool->size;
-
-  if (clib_bitmap_get(bitmap, index) != 0)
-    {
-      uword prev = index;
-      index = clib_bitmap_next_clear(bitmap, prev);
-      /* clib_bitmap_next_clear can return a bit after the end some times,
-       * as it takes full words and forgets about the exact number of bits.
-       * Because of this, two conditions have to be checked for error
-       */
-      if (index >= pool->size || index == prev)
-        {
-          index = clib_bitmap_first_clear(bitmap);
-          CLIB_ERROR_ASSERT (index < pool->size
-                              && clib_bitmap_get(bitmap, index) == 0);
-        }
-    }
-
-  -- pool->num_free;
-  bitmap = clib_bitmap_set(bitmap, index, 1);
-  ip4_output->ip4_src.as_u32 = clib_host_to_net_u32(pool->start_address + index);
-
+  return false;
 }
 
 bool
@@ -109,10 +154,10 @@ fip64_pool_release (fip64_pool_t *pool, fip64_ip6_ip4_value_t ip4_value)
   if (index < pool->size && clib_bitmap_get(pool->used_map, index) == 1)
     {
       pool->used_map = clib_bitmap_set(pool->used_map, index, 0);
+      clib_dlist_remove (pool->list_pool, ip4_value.lru_position);
       ++ pool->num_free;
       return true;
     }
-
   clib_warning("fip64_pool_release: Address %U not in use for pool %U",
                format_ip4_address, &ip4_value.ip4_src,
                format_pool_range, pool);
@@ -131,6 +176,7 @@ void
 fip64_pool_free (fip64_pool_t *pool)
 {
   clib_bitmap_free (pool->used_map);
+  pool_free(pool->list_pool);
   clib_mem_free (pool);
 }
 
