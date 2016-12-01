@@ -33,7 +33,9 @@ fip64_pool_t*
 fip64_pool_alloc (ip4_address_t start, ip4_address_t end);
 
 /* fip64_pool_free(pool)
- * releases the memory allocated to the pool
+ * releases the memory allocated to the pool.
+ * return true if old address was expired and must be removed from
+ * fip64 hashes
  */
 void
 fip64_pool_free (fip64_pool_t* pool);
@@ -43,7 +45,7 @@ fip64_pool_free (fip64_pool_t* pool);
  * If there are no addresses left, "expires" the LRU mapping
  * and uses it
  */
-void
+bool
 fip64_pool_get (fip64_pool_t* pool, ip6_address_t *ip6,
                 fip64_ip6_ip4_value_t *ip4_output);
 

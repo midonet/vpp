@@ -60,10 +60,15 @@ test_pool_single_host ()
 
   fip64_pool_get(pool, &ip6, &ip4_value);
   _assert (ip4_value.ip4_src.as_u32 == net.as_u32);
+  _assert (ip4_value.lru_position == 1);
   _assert (fip64_pool_available(pool) == 0);
 
+  ++ip6.as_u8[15]; // 2016::2
   fip64_pool_get(pool, &ip6, &ip4_value1);
-  _assert (ip4_value1.ip4_src.as_u32 == 0);
+  _assert (ip4_value1.ip4_src.as_u32 == net.as_u32);
+  _assert (pool->size == 1);
+  _assert (pool->num_free == 0);
+
   _assert (fip64_pool_release(pool, ip4_value) == true);
   _assert (fip64_pool_release(pool, ip4_value) == false);
 
@@ -114,8 +119,9 @@ test_pool_two_hosts ()
   _assert (min_addr == address);
   _assert (max_addr == address+1);
   _assert (fip64_pool_available(pool) == 0);
-  fip64_pool_get(pool, &ip6, &ip4_value);
-  _assert (ip4_value.ip4_src.as_u32 == 0);
+  _assert (fip64_pool_get(pool, &ip6, &ip4_value) == true);
+  _assert (ip4_value.ip4_src.as_u32 == clib_host_to_net_u32(a));
+  _assert (fip64_pool_available(pool) == 0);
   _assert (fip64_pool_release(pool, a_ip4_value) == true);
   _assert (fip64_pool_available(pool) == 1);
   _assert (fip64_pool_release(pool, b_ip4_value) == true);
@@ -147,7 +153,7 @@ test_pool_fill (u32 start, u32 end)
   used = calloc(pool->size, 1);
   _assert (used != 0);
 
-  fip64_ip6_ip4_value_t ip4_value;
+  fip64_ip6_ip4_value_t ip4_value, ip4_first_value;
   ip6_address_t ip6;
   memset(&ip6, 0, sizeof(ip6_address_t));
   ip6.as_u8[0] = 0x20;
@@ -155,12 +161,17 @@ test_pool_fill (u32 start, u32 end)
 
   clock_t worst = 0;
   u32 i = 0;
+
   for (;i<pool->size;++i)
     {
       ip6.as_u32[3] ++;
 
       clock_t start = clock();
       fip64_pool_get(pool, &ip6, &ip4_value);
+      if (i == 0)
+        {
+          ip4_first_value = ip4_value;
+        }
       u32 index = clib_net_to_host_u32(ip4_value.ip4_src.as_u32) - pool->start_address;
       clock_t took = clock() - start;
 
@@ -171,15 +182,17 @@ test_pool_fill (u32 start, u32 end)
       used[index] = true;
     }
   _assert(fip64_pool_available(pool) == 0);
-  //_assert (fip64_pool_get(pool, &ip6).as_u32 == 0);
+  _assert (fip64_pool_get(pool, &ip6, &ip4_value) == 1);
+  _assert (ip4_value.ip4_src.as_u32 == ip4_first_value.ip4_src.as_u32);
 
-  /*for (i=0;i<pool->size;++i)
+  for (i=0;i<pool->size;++i)
     {
       _assert (used[i] == true);
-      ip4 = address_from_u32 (pool->start_address + i);
-      fip64_pool_release (pool, ip4);
+      ip4_value.ip4_src = address_from_u32 (pool->start_address + i);
+      ip4_value.lru_position = i + 1;
+      fip64_pool_release (pool, ip4_value);
     }
-  _assert(fip64_pool_available(pool) == pool->size);*/
+  _assert(fip64_pool_available(pool) == pool->size);
 
   fprintf(stderr,"fip64_pool test for range of size %u. "
                  "Worst lookup time: %lf ms.\n",
