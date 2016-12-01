@@ -21,18 +21,9 @@
 #include <vnet/ip/ip.h>
 #include <vnet/ip/ip4.h>
 
-/* Pool structure to manage a subnet of IPv4 addresses. It will try to return
- * the same mapping for a given IPv6 address as long as it is available.
- */
-typedef struct {
-  u32 start_address,
-      end_address,
-      size,
-      num_free;
-  clib_bitmap_t *used_map;
-} fip64_pool_t;
+#include "fip64_types.h"
 
-/* fip64_pool_alloc(start, end)
+/* fip65_pool_alloc(start, end)
  * allocates a new pool with the addresses in the range start to end,
  * both included.
  */
