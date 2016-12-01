@@ -51,21 +51,27 @@ fip64_pool_alloc (ip4_address_t start, ip4_address_t end)
     }
 
   clib_bitmap_alloc (pool->used_map, pool->size);
+  dlist_elt_t *head;
+  pool->list_pool = 0;
+  pool_get(pool->list_pool, head);
+  CLIB_ERROR_ASSERT(head == pool->list_pool);
+  clib_dlist_init(pool->list_pool, 0);
 
   return pool;
 }
 
-ip4_address_t
-fip64_pool_get (fip64_pool_t *pool, ip6_address_t *ip6)
+void
+fip64_pool_get (fip64_pool_t *pool, ip6_address_t *ip6,
+                fip64_ip6_ip4_value_t *ip4_output)
 {
-  ip4_address_t result;
 
+  ip4_output->lru_position = 0;
   // availability should've been checked before calling this method
   // in order to expire mappings if needed.
   if (!fip64_pool_available(pool))
     {
-      result.as_u32 = 0;
-      return result;
+      ip4_output->ip4_src.as_u32 = 0;
+      return;
     }
 
   uword *bitmap = pool->used_map;
@@ -91,15 +97,14 @@ fip64_pool_get (fip64_pool_t *pool, ip6_address_t *ip6)
 
   -- pool->num_free;
   bitmap = clib_bitmap_set(bitmap, index, 1);
-  result.as_u32 = clib_host_to_net_u32(pool->start_address + index);
+  ip4_output->ip4_src.as_u32 = clib_host_to_net_u32(pool->start_address + index);
 
-  return result;
 }
 
 bool
-fip64_pool_release (fip64_pool_t *pool, ip4_address_t address)
+fip64_pool_release (fip64_pool_t *pool, fip64_ip6_ip4_value_t ip4_value)
 {
-  uword index = clib_net_to_host_u32 (address.as_u32) - pool->start_address;
+  uword index = clib_net_to_host_u32 (ip4_value.ip4_src.as_u32) - pool->start_address;
 
   if (index < pool->size && clib_bitmap_get(pool->used_map, index) == 1)
     {
@@ -109,9 +114,17 @@ fip64_pool_release (fip64_pool_t *pool, ip4_address_t address)
     }
 
   clib_warning("fip64_pool_release: Address %U not in use for pool %U",
-               format_ip4_address, &address,
+               format_ip4_address, &ip4_value.ip4_src,
                format_pool_range, pool);
   return false;
+}
+
+void
+fip64_pool_lru_update(fip64_pool_t* pool, fip64_ip6_ip4_value_t *ip4_value)
+{
+  dlist_elt_t *list_pool = pool->list_pool;
+  clib_dlist_remove (list_pool, ip4_value->lru_position);
+  clib_dlist_addtail (list_pool, 0, ip4_value->lru_position);
 }
 
 void
