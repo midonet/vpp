@@ -131,8 +131,9 @@ test_pool_two_hosts ()
  done:
   return error;
 }
+
 /* test_pool_fill(start, end)
- * stresses a pool by allocating all the addresses and then freeing them.
+ * stresses a pool by allocating all the addresses twice and then freeing them.
  * Making sure no address is returned while still in use.
  *
  * Prints the worst lookup time to standard error.
@@ -205,6 +206,79 @@ done:
   return error;
 }
 
+/* test_pool_reuse(start, end)
+ * stresses a pool by allocating all the addresses 3 times
+ * Making sure no address is returned while still in use.
+ */
+static
+clib_error_t *
+test_pool_reuse (u32 start, u32 end)
+{
+  clib_error_t *error = 0;
+
+  fip64_pool_t *pool = 0;
+  bool *used = 0;
+
+  pool = fip64_pool_alloc(address_from_u32(start),
+                          address_from_u32(end));
+  CLIB_ERROR_ASSERT(pool != 0);
+  u32 assigned_ips[pool->size];
+
+  used = calloc(pool->size, 1);
+  _assert (used != 0);
+
+  fip64_ip6_ip4_value_t ip4_value, ip4_first_value;
+  ip6_address_t ip6;
+  memset(&ip6, 0, sizeof(ip6_address_t));
+  ip6.as_u8[0] = 0x20;
+  ip6.as_u8[1] = 0x16; // 2016::x
+
+  u32 i = 0;
+  u32 step = 0;
+
+  for (step = 0; step < 3; ++step)
+    {
+      for (i = 0;i<pool->size;++i)
+        {
+          ip6.as_u32[3] ++;
+
+          bool removed_old = fip64_pool_get(pool, &ip6, &ip4_value);
+          if (i == 0)
+            {
+              ip4_first_value = ip4_value;
+            }
+          _assert(step == 0 || removed_old);
+          if (step > 0)
+            {
+              _assert(ip4_value.ip4_src.as_u32 == assigned_ips[i]);
+            }
+          assigned_ips[i] = ip4_value.ip4_src.as_u32;
+          u32 index = clib_net_to_host_u32(ip4_value.ip4_src.as_u32) - pool->start_address;
+
+          _assert(index < pool->size);
+          _assert (step || used[index] == false);
+          used[index] = true;
+        }
+    }
+  _assert(fip64_pool_available(pool) == 0);
+  _assert (fip64_pool_get(pool, &ip6, &ip4_value) == 1);
+  _assert (ip4_value.ip4_src.as_u32 == ip4_first_value.ip4_src.as_u32);
+
+  for (i=0;i<pool->size;++i)
+    {
+      _assert (used[i] == true);
+      ip4_value.ip4_src = address_from_u32 (pool->start_address + i);
+      ip4_value.lru_position = i + 1;
+      fip64_pool_release (pool, ip4_value);
+    }
+  _assert(fip64_pool_available(pool) == pool->size);
+
+done:
+  if (pool) fip64_pool_free(pool);
+  free(used);
+  return error;
+}
+
 static
 clib_error_t *
 test_pool_bad_range (u32 start, u32 end)
@@ -233,7 +307,9 @@ test_pool()
   TEST(bad_range, 0, 0xffffffff);
   TEST(fill, 0x0aff0001, 0x0afffffe);
   TEST(fill, 0x0affff01, 0x0afffffe);
-  TEST(fill, 0x0af00001, 0x0afffffe);/**/
+  TEST(fill, 0x0af00001, 0x0afffffe);
+  TEST(reuse, 0x0affff01, 0x0afffffe);
+  TEST(reuse, 0x0af00001, 0x0afffffe);
 #undef TEST
 
   return error;
