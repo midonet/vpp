@@ -232,6 +232,7 @@ fip64_lookup_ip4_to_ip6(fip64_main_t * fip64_main,
                         ip6_address_t * ip6_src, ip6_address_t * ip6_dst)
 {
   fip64_ip4key_t key;
+  fip64_ip6_ip4_value_t ip4_value;
   key.fixed = ip4->dst_address;
   key.table_id = ip4->table_id;
 
@@ -250,6 +251,9 @@ fip64_lookup_ip4_to_ip6(fip64_main_t * fip64_main,
     *ip6_dst = mapping->fip6;
     fip64_ip4_ip6_value_t *ip6_value = (fip64_ip4_ip6_value_t*) *p;
     *ip6_src = ip6_value->ip6_src;
+    ip4_value.ip4_src = ip4->src_address;
+    ip4_value.lru_position = ip6_value->lru_position;
+    fip64_pool_lru_update(mapping->tenant->pool, &ip4_value);
     return true;
   }
   return false;
