@@ -108,14 +108,23 @@ fip64_add_mapping(fip64_mapping_t * mapping,
 }
 
 static void
-cleanup_entry(fip64_mapping_t *mapping, ip6_address_t *ip6,
+cleanup_mappings(fip64_mapping_t *mapping,
+              ip6_address_t *ip6,
               fip64_ip6_ip4_value_t *ip4_value)
 {
-    fip64_pool_release(mapping->tenant->pool, *ip4_value);
     hash_unset(mapping->ip6_ip4_hash, ip6);
     hash_unset(mapping->ip4_ip6_hash, &ip4_value->ip4_src);
     clib_mem_free(ip4_value);
     clib_mem_free(ip6);
+}
+
+static void
+cleanup_entry(fip64_mapping_t *mapping,
+              ip6_address_t *ip6,
+              fip64_ip6_ip4_value_t *ip4_value)
+{
+    fip64_pool_release(mapping->tenant->pool, *ip4_value);
+    cleanup_mappings(mapping, ip6, ip4_value);
 }
 
 clib_error_t *
@@ -126,6 +135,7 @@ fip64_del_all_mappings(fip64_mapping_t * mapping)
   hash_foreach(k, v, mapping->ip6_ip4_hash,                                \
     ip6_address_t * ip6 = (ip6_address_t*) k;                              \
     fip64_ip6_ip4_value_t * ip4_value = (fip64_ip6_ip4_value_t*) v;        \
+    clib_warning("Removing entry: %U %U", format_ip6_address, ip6, format_ip4_address, &ip4_value->ip4_src); \
     cleanup_entry(mapping, ip6, ip4_value));
   return 0;
 }
@@ -179,7 +189,7 @@ fip64_lookup_ip6_to_ip4(fip64_main_t * fip64_main,
     clib_warning("Expiring mapping: %U -> %U",
       format_ip6_address, ip6_to_del,
       format_ip4_address, &ip4_to_del->ip4_src);
-    cleanup_entry(mapping, ip6_to_del, ip4_to_del);
+    cleanup_mappings(mapping, ip6_to_del, ip4_to_del);
   }
   if (NULL != fip64_add_mapping(mapping, ip6_src, ip4_value))
   {
