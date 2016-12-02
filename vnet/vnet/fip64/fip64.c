@@ -104,9 +104,29 @@ fip64_add_mapping(fip64_mapping_t * mapping,
   clib_memcpy(ip4_value, &ip4_input, sizeof(ip4_input));
   hash_set_mem(mapping->ip6_ip4_hash, ip6, ip4_value);
   hash_set_mem(mapping->ip4_ip6_hash, &ip4_value->ip4_src, ip6);
+
   return 0;
 }
 
+void
+print_ip6_ip4_mapping(fip64_main_t *fip64_main,
+                      ip6_address_t *fip6)
+{
+  uword *p = hash_get_mem(fip64_main->fip6_mapping_hash, fip6);
+  fip64_mapping_t *mapping = (fip64_mapping_t*) *p;
+  uword k, v;
+  uword size = 0;
+  hash_foreach(k, v, mapping->ip6_ip4_hash,                                 \
+    ++size; \
+    ip6_address_t * _ip6 = (ip6_address_t*) k;                              \
+    fip64_ip6_ip4_value_t * _ip4_value = (fip64_ip6_ip4_value_t*) v;        \
+    clib_warning("Hash entry: %U %U", format_ip6_address, _ip6, format_ip4_address, &_ip4_value->ip4_src));
+  clib_warning("Hash size: %d", size);
+}
+
+/*
+ * Modifies hash, so better not to use from hash_foreach() loop
+*/
 static void
 cleanup_mappings(fip64_mapping_t *mapping,
               ip6_address_t *ip6,
@@ -124,7 +144,8 @@ cleanup_entry(fip64_mapping_t *mapping,
               fip64_ip6_ip4_value_t *ip4_value)
 {
     fip64_pool_release(mapping->tenant->pool, *ip4_value);
-    cleanup_mappings(mapping, ip6, ip4_value);
+    clib_mem_free(ip4_value);
+    clib_mem_free(ip6);
 }
 
 clib_error_t *
@@ -135,8 +156,9 @@ fip64_del_all_mappings(fip64_mapping_t * mapping)
   hash_foreach(k, v, mapping->ip6_ip4_hash,                                \
     ip6_address_t * ip6 = (ip6_address_t*) k;                              \
     fip64_ip6_ip4_value_t * ip4_value = (fip64_ip6_ip4_value_t*) v;        \
-    clib_warning("Removing entry: %U %U", format_ip6_address, ip6, format_ip4_address, &ip4_value->ip4_src); \
     cleanup_entry(mapping, ip6, ip4_value));
+  hash_free(mapping->ip6_ip4_hash);
+  hash_free(mapping->ip4_ip6_hash);
   return 0;
 }
 
