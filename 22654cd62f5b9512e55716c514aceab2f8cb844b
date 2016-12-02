@@ -1,0 +1,67 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5aa745d1_ac02eb6d",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 1003555
+      },
+      "writtenOn": "2016-12-02T16:15:33Z",
+      "side": 1,
+      "message": "I\u0027d replace this with 2 methods. \n\nfip64_pool_get() // returns true if success\n\nfip64_pool_expire_and_get() // called if get fails, does the !fip64_pool_available() branch",
+      "range": {
+        "startLine": 64,
+        "startChar": 0,
+        "endLine": 64,
+        "endChar": 14
+      },
+      "revId": "22654cd62f5b9512e55716c514aceab2f8cb844b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5aa745d1_aceb0bb0",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 1003555
+      },
+      "writtenOn": "2016-12-02T16:15:33Z",
+      "side": 1,
+      "message": "comment is out of date.",
+      "range": {
+        "startLine": 70,
+        "startChar": 0,
+        "endLine": 71,
+        "endChar": 43
+      },
+      "revId": "22654cd62f5b9512e55716c514aceab2f8cb844b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5aa745d1_ec2fd3f4",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 1003555
+      },
+      "writtenOn": "2016-12-02T16:15:33Z",
+      "side": 1,
+      "message": "My understanding is that the number of available mappings, before we start expiring LRU entries is the number of available source addresses. This is very large. We need good testing on this. It could take up 10s of MB per tenant router.",
+      "revId": "22654cd62f5b9512e55716c514aceab2f8cb844b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
