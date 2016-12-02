@@ -81,6 +81,12 @@ fip64_lookup_ip4_to_ip6(fip64_main_t * fip64_main,
                         fip64_ip4_t * ip4,
                         ip6_address_t * ip6_src, ip6_address_t * ip6_dst);
 
+/*
+* For debug only
+*/
+extern void
+print_ip6_ip4_mapping(fip64_main_t *fip64_main, ip6_address_t *fip6);
+
 u8 *format_fip64_trace (u8 * s, va_list * args);
 
 extern vlib_node_registration_t ip4_fip64_node;
