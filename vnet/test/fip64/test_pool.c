@@ -157,6 +157,7 @@ test_pool_fill (u32 start, u32 end)
   fip64_ip6_ip4_value_t ip4_value, ip4_first_value;
   ip6_address_t ip6;
   memset(&ip6, 0, sizeof(ip6_address_t));
+  memset(&ip4_first_value, 0, sizeof(ip4_first_value));
   ip6.as_u8[0] = 0x20;
   ip6.as_u8[1] = 0x16; // 2016::x
 
@@ -230,6 +231,7 @@ test_pool_reuse (u32 start, u32 end)
   fip64_ip6_ip4_value_t ip4_value, ip4_first_value;
   ip6_address_t ip6;
   memset(&ip6, 0, sizeof(ip6_address_t));
+  memset(&ip4_first_value, 0, sizeof(ip4_first_value));
   ip6.as_u8[0] = 0x20;
   ip6.as_u8[1] = 0x16; // 2016::x
 
