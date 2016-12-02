@@ -55,12 +55,21 @@ typedef struct {
   u32 table_id;
 } fip64_ip4key_t;
 
-/**
-*/
+/*
+ * value stored in ip6_ip4_hash
+ */
 typedef struct {
   ip4_address_t ip4_src; // Comes from tenant pool
   u32 lru_position; // Position of this client in lru list
 } fip64_ip6_ip4_value_t;
+
+/*
+ * value stored in ip4_ip6_hash
+ */
+typedef struct {
+  ip6_address_t ip6_src; // The address of ipv6 client
+  u32 lru_position; // Position of this client in lru list
+} fip64_ip4_ip6_value_t;
 
 typedef struct {
   ip6_address_t fip6;
