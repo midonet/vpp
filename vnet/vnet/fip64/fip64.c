@@ -91,18 +91,18 @@ format_fip64_trace (u8 * s, va_list * args)
  */
 clib_error_t *
 fip64_add_mapping(fip64_mapping_t * mapping,
-                  ip6_address_t * ip6_input,
-                  fip64_ip6_ip4_value_t ip4_input)
+                  fip64_ip4_ip6_value_t * ip6_input,
+                  fip64_ip6_ip4_value_t * ip4_input)
 {
-  ip6_address_t *ip6 = clib_mem_alloc(sizeof(ip6_address_t));
-  fip64_ip6_ip4_value_t *ip4_value = clib_mem_alloc(sizeof(ip4_input));
-  if (ip6 == 0 || ip4_value == 0) {
+  fip64_ip4_ip6_value_t *ip6_value = clib_mem_alloc(sizeof(*ip6_input));
+  fip64_ip6_ip4_value_t *ip4_value = clib_mem_alloc(sizeof(*ip4_input));
+  if (ip6_value == 0 || ip4_value == 0) {
     return clib_error_return (0, "Out of memory");
   }
-  clib_memcpy(ip6, ip6_input, sizeof(ip6_address_t));
-  clib_memcpy(ip4_value, &ip4_input, sizeof(ip4_input));
-  hash_set_mem(mapping->ip6_ip4_hash, ip6, ip4_value);
-  hash_set_mem(mapping->ip4_ip6_hash, &ip4_value->ip4_src, ip6);
+  clib_memcpy(ip6_value, ip6_input, sizeof(*ip6_input));
+  clib_memcpy(ip4_value, ip4_input, sizeof(*ip4_input));
+  hash_set_mem(mapping->ip6_ip4_hash, &ip6_value->ip6_src, ip4_value);
+  hash_set_mem(mapping->ip4_ip6_hash, &ip4_value->ip4_src, ip6_value);
 
   return 0;
 }
@@ -128,13 +128,13 @@ print_ip6_ip4_mapping(fip64_main_t *fip64_main,
 */
 static void
 cleanup_mappings(fip64_mapping_t *mapping,
-              ip6_address_t *ip6,
+              fip64_ip4_ip6_value_t *ip6_value,
               fip64_ip6_ip4_value_t *ip4_value)
 {
-    hash_unset(mapping->ip6_ip4_hash, ip6);
+    hash_unset(mapping->ip6_ip4_hash, &ip6_value->ip6_src);
     hash_unset(mapping->ip4_ip6_hash, &ip4_value->ip4_src);
     clib_mem_free(ip4_value);
-    clib_mem_free(ip6);
+    clib_mem_free(ip6_value);
 }
 
 static void
@@ -167,8 +167,13 @@ fip64_lookup_ip6_to_ip4(fip64_main_t * fip64_main,
                         fip64_ip4_t * ip4)
 {
   fip64_ip6_ip4_value_t ip4_value;
+  fip64_ip4_ip6_value_t ip6_value;
+
   ip4_value.ip4_src.as_u32 = 0;
   ip4_value.lru_position = 0;
+
+  memcpy(ip6_value.ip6_src.as_u8, ip6_src->as_u8, sizeof(*ip6_src));
+  ip6_value.lru_position = 0;
 
   // search dest ip6 in configured FIPs
   uword *p = hash_get_mem(fip64_main->fip6_mapping_hash, ip6_dst);
@@ -201,17 +206,18 @@ fip64_lookup_ip6_to_ip4(fip64_main_t * fip64_main,
   if (remove_old) {
     uword *p = hash_get_mem(mapping->ip4_ip6_hash, &ip4->src_address);
     CLIB_ERROR_ASSERT(p != 0);
-    ip6_address_t *ip6_to_del = (ip6_address_t*) *p;
+    fip64_ip4_ip6_value_t *ip6_to_del = (fip64_ip4_ip6_value_t*) *p;
     p = hash_get_mem(mapping->ip6_ip4_hash, ip6_to_del);
     CLIB_ERROR_ASSERT(p != 0);
     fip64_ip6_ip4_value_t *ip4_to_del = (fip64_ip6_ip4_value_t*) *p;
 
     clib_warning("Expiring mapping: %U -> %U",
-      format_ip6_address, ip6_to_del,
+      format_ip6_address, &ip6_to_del->ip6_src,
       format_ip4_address, &ip4_to_del->ip4_src);
     cleanup_mappings(mapping, ip6_to_del, ip4_to_del);
   }
-  if (NULL != fip64_add_mapping(mapping, ip6_src, ip4_value))
+  ip6_value.lru_position = ip4_value.lru_position;
+  if (NULL != fip64_add_mapping(mapping, &ip6_value, &ip4_value))
   {
     // failed when saving 4 <-> 6 mapping, return ip4 address to pool
     fip64_pool_release(tenant->pool, ip4_value);
@@ -242,7 +248,8 @@ fip64_lookup_ip4_to_ip6(fip64_main_t * fip64_main,
   if (p)
   {
     *ip6_dst = mapping->fip6;
-    *ip6_src = *(ip6_address_t*) *p;
+    fip64_ip4_ip6_value_t *ip6_value = (fip64_ip4_ip6_value_t*) *p;
+    *ip6_src = ip6_value->ip6_src;
     return true;
   }
   return false;
@@ -462,8 +469,8 @@ fip64_add(fip64_main_t *fip64_main,
   clib_warning ("Using pool[%d] = %U", tenant->table_id,
                 format_pool_range, tenant->pool);
 
-  mapping->ip6_ip4_hash = hash_create_mem(0, sizeof(ip6_address_t), sizeof(ip4_address_t));
-  mapping->ip4_ip6_hash = hash_create_mem(0, sizeof(ip4_address_t), sizeof(ip6_address_t));
+  mapping->ip6_ip4_hash = hash_create_mem(0, sizeof(ip6_address_t), sizeof(fip64_ip6_ip4_value_t));
+  mapping->ip4_ip6_hash = hash_create_mem(0, sizeof(ip4_address_t), sizeof(fip64_ip4_ip6_value_t));
   hash_set_mem(fip64_main->fip6_mapping_hash, &mapping->fip6, mapping);
 
   fip64_add_del_ip6_adjacency(fip64_main, &mapping->fip6, IP6_ROUTE_FLAG_ADD);
