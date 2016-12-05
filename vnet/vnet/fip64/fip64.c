@@ -111,22 +111,29 @@ static void
 cleanup_entry(fip64_mapping_t *mapping, ip6_address_t *ip6,
               fip64_ip6_ip4_value_t *ip4_value)
 {
-    fip64_pool_release(mapping->tenant->pool, *ip4_value);
     hash_unset(mapping->ip6_ip4_hash, ip6);
     hash_unset(mapping->ip4_ip6_hash, &ip4_value->ip4_src);
     clib_mem_free(ip4_value);
     clib_mem_free(ip6);
 }
 
+static void
+cleanup_entry_and_pool(fip64_mapping_t *mapping, ip6_address_t *ip6,
+              fip64_ip6_ip4_value_t *ip4_value)
+{
+    fip64_pool_release(mapping->tenant->pool, *ip4_value);
+    cleanup_entry(mapping, ip6, ip4_value);
+}
+
+
 clib_error_t *
 fip64_del_all_mappings(fip64_mapping_t * mapping)
 {
-
   uword k, v;
   hash_foreach(k, v, mapping->ip6_ip4_hash,                                \
     ip6_address_t * ip6 = (ip6_address_t*) k;                              \
     fip64_ip6_ip4_value_t * ip4_value = (fip64_ip6_ip4_value_t*) v;        \
-    cleanup_entry(mapping, ip6, ip4_value));
+    cleanup_entry_and_pool(mapping, ip6, ip4_value));
   return 0;
 }
 
