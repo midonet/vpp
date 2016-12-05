@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "5aa745d1_a62567c3",
+        "filename": "vnet/test/fip64/test_pool.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 182,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-12-05T10:11:52Z",
+      "side": 1,
+      "message": "Yep, I modified this in later patches",
+      "parentUuid": "5aa745d1_c69d135b",
+      "range": {
+        "startLine": 174,
+        "startChar": 2,
+        "endLine": 182,
+        "endChar": 54
+      },
+      "revId": "9843da8c302ac8104974773a779834e31e2f0fa7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5aa745d1_e6980f6d",
         "filename": "vnet/test/fip64/test_pool.c",
         "patchSetId": 3
@@ -36,6 +60,30 @@
       "writtenOn": "2016-12-05T09:18:58Z",
       "side": 1,
       "message": "remove?",
+      "range": {
+        "startLine": 223,
+        "startChar": 37,
+        "endLine": 223,
+        "endChar": 41
+      },
+      "revId": "9843da8c302ac8104974773a779834e31e2f0fa7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5aa745d1_86094b34",
+        "filename": "vnet/test/fip64/test_pool.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 223,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-12-05T10:11:52Z",
+      "side": 1,
+      "message": "Done in later patch",
+      "parentUuid": "5aa745d1_e6980f6d",
       "range": {
         "startLine": 223,
         "startChar": 37,
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "5aa745d1_46034310",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-12-05T10:11:52Z",
+      "side": 1,
+      "message": "Done in later patch",
+      "parentUuid": "5aa745d1_86a02b92",
+      "range": {
+        "startLine": 169,
+        "startChar": 0,
+        "endLine": 169,
+        "endChar": 1
+      },
+      "revId": "9843da8c302ac8104974773a779834e31e2f0fa7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5aa745d1_06bbfbc5",
         "filename": "vnet/vnet/fip64/fip64_types.h",
         "patchSetId": 3
@@ -82,6 +154,30 @@
       "writtenOn": "2016-12-05T09:18:58Z",
       "side": 1,
       "message": "missing doc",
+      "range": {
+        "startLine": 58,
+        "startChar": 0,
+        "endLine": 59,
+        "endChar": 2
+      },
+      "revId": "9843da8c302ac8104974773a779834e31e2f0fa7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5aa745d1_29ffe802",
+        "filename": "vnet/vnet/fip64/fip64_types.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 59,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-12-05T10:11:52Z",
+      "side": 1,
+      "message": "Added in later patch",
+      "parentUuid": "5aa745d1_06bbfbc5",
       "range": {
         "startLine": 58,
         "startChar": 0,
@@ -129,6 +225,30 @@
       "side": 1,
       "message": "I looked at the other patch and I understand this better now, it\u0027s fine to leave like this",
       "parentUuid": "5aa745d1_4646a3c0",
+      "range": {
+        "startLine": 63,
+        "startChar": 8,
+        "endLine": 63,
+        "endChar": 23
+      },
+      "revId": "9843da8c302ac8104974773a779834e31e2f0fa7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5aa745d1_09042c13",
+        "filename": "vnet/vnet/fip64/fip64_types.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-12-05T10:11:52Z",
+      "side": 1,
+      "message": "ok",
+      "parentUuid": "5aa745d1_66207ff8",
       "range": {
         "startLine": 63,
         "startChar": 8,
