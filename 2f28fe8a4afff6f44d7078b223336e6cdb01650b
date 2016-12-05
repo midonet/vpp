@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5aa745d1_3ce4c839",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 169,
+      "author": {
+        "id": 1002751
+      },
+      "writtenOn": "2016-12-05T14:10:24Z",
+      "side": 1,
+      "message": "nit: put on next line",
+      "range": {
+        "startLine": 169,
+        "startChar": 18,
+        "endLine": 169,
+        "endChar": 19
+      },
+      "revId": "2f28fe8a4afff6f44d7078b223336e6cdb01650b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5aa745d1_fc30a0a0",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 3
+      },
+      "lineNbr": 125,
+      "author": {
+        "id": 1002751
+      },
+      "writtenOn": "2016-12-05T14:10:24Z",
+      "side": 1,
+      "message": "this is not used, can it be defined below?",
+      "range": {
+        "startLine": 125,
+        "startChar": 2,
+        "endLine": 125,
+        "endChar": 19
+      },
+      "revId": "2f28fe8a4afff6f44d7078b223336e6cdb01650b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5aa745d1_3c5288de",
+        "filename": "vnet/vnet/fip64/fip64_pool.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 46,
+      "author": {
+        "id": 1002751
+      },
+      "writtenOn": "2016-12-05T14:10:24Z",
+      "side": 1,
+      "message": "does this mean some previous address? or is it related to some address specified here?",
+      "range": {
+        "startLine": 46,
+        "startChar": 15,
+        "endLine": 46,
+        "endChar": 29
+      },
+      "revId": "2f28fe8a4afff6f44d7078b223336e6cdb01650b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
