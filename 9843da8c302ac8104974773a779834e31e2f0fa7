@@ -114,6 +114,30 @@
       "revId": "9843da8c302ac8104974773a779834e31e2f0fa7",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5aa745d1_66207ff8",
+        "filename": "vnet/vnet/fip64/fip64_types.h",
+        "patchSetId": 3
+      },
+      "lineNbr": 63,
+      "author": {
+        "id": 1002751
+      },
+      "writtenOn": "2016-12-05T09:21:46Z",
+      "side": 1,
+      "message": "I looked at the other patch and I understand this better now, it\u0027s fine to leave like this",
+      "parentUuid": "5aa745d1_4646a3c0",
+      "range": {
+        "startLine": 63,
+        "startChar": 8,
+        "endLine": 63,
+        "endChar": 23
+      },
+      "revId": "9843da8c302ac8104974773a779834e31e2f0fa7",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
     }
   ]
 }
