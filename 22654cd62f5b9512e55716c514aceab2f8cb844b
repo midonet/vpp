@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "5aa745d1_c913e40c",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 64,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-12-05T11:24:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5aa745d1_ac02eb6d",
+      "range": {
+        "startLine": 64,
+        "startChar": 0,
+        "endLine": 64,
+        "endChar": 14
+      },
+      "revId": "22654cd62f5b9512e55716c514aceab2f8cb844b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5aa745d1_aceb0bb0",
         "filename": "vnet/vnet/fip64/fip64_pool.c",
         "patchSetId": 2
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "5aa745d1_6903b0b9",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 71,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-12-05T11:24:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5aa745d1_aceb0bb0",
+      "range": {
+        "startLine": 70,
+        "startChar": 0,
+        "endLine": 71,
+        "endChar": 43
+      },
+      "revId": "22654cd62f5b9512e55716c514aceab2f8cb844b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5aa745d1_ec2fd3f4",
         "filename": "vnet/vnet/fip64/fip64_pool.c",
         "patchSetId": 2
@@ -59,6 +107,24 @@
       "writtenOn": "2016-12-02T16:15:33Z",
       "side": 1,
       "message": "My understanding is that the number of available mappings, before we start expiring LRU entries is the number of available source addresses. This is very large. We need good testing on this. It could take up 10s of MB per tenant router.",
+      "revId": "22654cd62f5b9512e55716c514aceab2f8cb844b",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5aa745d1_29ba48e2",
+        "filename": "vnet/vnet/fip64/fip64_pool.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 72,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-12-05T11:24:07Z",
+      "side": 1,
+      "message": "The true lru adds extra 20bytes (12 bytes list element + 8 bytes to store lru_position in ip6\u003c-\u003eip4 mappings) of memory to the current 36bytes we allocate per each client (4bytes + 16 bytes + 2 * 8 bytes pointers that store ip6_ip4/ip4_ip6 hashes). In total we would need ~200MB of memory for 4 millions clients per tenant router. Depending on the number of the expected connections we could do few thing to reduce memory usage. We can discuss them",
+      "parentUuid": "5aa745d1_ec2fd3f4",
       "revId": "22654cd62f5b9512e55716c514aceab2f8cb844b",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
       "unresolved": false
