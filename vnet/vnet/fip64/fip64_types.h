@@ -48,6 +48,8 @@ typedef struct {
                 pool_end;
   fip64_pool_t *pool;
   u32 num_references;
+  uword *ip6_ip4_hash; /* ip6 src address to fip64_ip6_ip4_value_t map */
+  uword *ip4_ip6_hash; /* ip4 (src,dst) address to ip6 (src,dst) address map */
 } fip64_tenant_t;
 
 typedef struct {
@@ -75,8 +77,6 @@ typedef struct {
   ip6_address_t fip6;
   fip64_ip4key_t ip4;
   fip64_tenant_t *tenant;
-  uword *ip6_ip4_hash; /* ip6 src address to fip64_ip6_ip4_value_t map */
-  uword *ip4_ip6_hash; /* ip4 (src,dst) address to ip6 (src,dst) address map */
 } fip64_mapping_t;
 
 typedef struct {

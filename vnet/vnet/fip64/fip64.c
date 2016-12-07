@@ -90,7 +90,7 @@ format_fip64_trace (u8 * s, va_list * args)
  * Create/Delete/Lookup functions for ip6-ip4 mappings
  */
 clib_error_t *
-fip64_add_mapping(fip64_mapping_t * mapping,
+fip64_add_mapping(fip64_tenant_t *tenant,
                   fip64_ip4_ip6_value_t * ip6_input,
                   fip64_ip6_ip4_value_t * ip4_input)
 {
@@ -102,8 +102,8 @@ fip64_add_mapping(fip64_mapping_t * mapping,
   }
   clib_memcpy(ip6_value, ip6_input, sizeof(*ip6_input));
   clib_memcpy(ip4_value, ip4_input, sizeof(*ip4_input));
-  hash_set_mem(mapping->ip6_ip4_hash, &ip6_value->ip6_src, ip4_value);
-  hash_set_mem(mapping->ip4_ip6_hash, &ip4_value->ip4_src, ip6_value);
+  hash_set_mem(tenant->ip6_ip4_hash, &ip6_value->ip6_src, ip4_value);
+  hash_set_mem(tenant->ip4_ip6_hash, &ip4_value->ip4_src, ip6_value);
 
   return 0;
 }
@@ -113,11 +113,11 @@ print_ip6_ip4_mapping(fip64_main_t *fip64_main,
                       ip6_address_t *fip6)
 {
   uword *p = hash_get_mem(fip64_main->fip6_mapping_hash, fip6);
-  fip64_mapping_t *mapping = (fip64_mapping_t*) *p;
+  fip64_tenant_t *tenant = ((fip64_mapping_t*)*p)->tenant;
   uword k, v;
   uword size = 0;
-  hash_foreach(k, v, mapping->ip6_ip4_hash,                                 \
-    ++size; \
+  hash_foreach(k, v, tenant->ip6_ip4_hash,                                  \
+    ++size;                                                                 \
     ip6_address_t * _ip6 = (ip6_address_t*) k;                              \
     fip64_ip6_ip4_value_t * _ip4_value = (fip64_ip6_ip4_value_t*) v;        \
     clib_warning("Hash entry: %U %U", format_ip6_address, _ip6, format_ip4_address, &_ip4_value->ip4_src));
@@ -128,37 +128,37 @@ print_ip6_ip4_mapping(fip64_main_t *fip64_main,
  * Modifies hash, so better not to use from hash_foreach() loop
 */
 static void
-cleanup_mappings(fip64_mapping_t *mapping,
+cleanup_mappings(fip64_tenant_t *tenant,
               fip64_ip4_ip6_value_t *ip6_value,
               fip64_ip6_ip4_value_t *ip4_value)
 {
-    hash_unset(mapping->ip6_ip4_hash, &ip6_value->ip6_src);
-    hash_unset(mapping->ip4_ip6_hash, &ip4_value->ip4_src);
+    hash_unset(tenant->ip6_ip4_hash, &ip6_value->ip6_src);
+    hash_unset(tenant->ip4_ip6_hash, &ip4_value->ip4_src);
     clib_mem_free(ip4_value);
     clib_mem_free(ip6_value);
 }
 
 static void
-cleanup_entry(fip64_mapping_t *mapping,
+cleanup_entry(fip64_tenant_t *tenant,
               ip6_address_t *ip6,
               fip64_ip6_ip4_value_t *ip4_value)
 {
-    fip64_pool_release(mapping->tenant->pool, *ip4_value);
+    fip64_pool_release(tenant->pool, *ip4_value);
     clib_mem_free(ip4_value);
     clib_mem_free(ip6);
 }
 
-clib_error_t *
-fip64_del_all_mappings(fip64_mapping_t * mapping)
+static clib_error_t *
+fip64_del_all_mappings(fip64_tenant_t * tenant)
 {
 
   uword k, v;
-  hash_foreach(k, v, mapping->ip6_ip4_hash,                                \
+  hash_foreach(k, v, tenant->ip6_ip4_hash,                                 \
     ip6_address_t * ip6 = (ip6_address_t*) k;                              \
     fip64_ip6_ip4_value_t * ip4_value = (fip64_ip6_ip4_value_t*) v;        \
-    cleanup_entry(mapping, ip6, ip4_value));
-  hash_free(mapping->ip6_ip4_hash);
-  hash_free(mapping->ip4_ip6_hash);
+    cleanup_entry(tenant, ip6, ip4_value));
+  hash_free(tenant->ip6_ip4_hash);
+  hash_free(tenant->ip4_ip6_hash);
   return 0;
 }
 
@@ -191,7 +191,7 @@ fip64_lookup_ip6_to_ip4(fip64_main_t * fip64_main,
   ip4->table_id    = mapping->ip4.table_id;
 
   // lookup for existing mapping
-  p = hash_get_mem(mapping->ip6_ip4_hash, ip6_src);
+  p = hash_get_mem(tenant->ip6_ip4_hash, ip6_src);
   if (p)
   {
     ip4_value = *(fip64_ip6_ip4_value_t*) *p;
@@ -206,20 +206,20 @@ fip64_lookup_ip6_to_ip4(fip64_main_t * fip64_main,
   ip4->src_address = ip4_value.ip4_src;
   if (remove_old)
   {
-    uword *p = hash_get_mem(mapping->ip4_ip6_hash, &ip4->src_address);
+    uword *p = hash_get_mem(tenant->ip4_ip6_hash, &ip4->src_address);
     CLIB_ERROR_ASSERT(p != 0);
     fip64_ip4_ip6_value_t *ip6_to_del = (fip64_ip4_ip6_value_t*) *p;
-    p = hash_get_mem(mapping->ip6_ip4_hash, ip6_to_del);
+    p = hash_get_mem(tenant->ip6_ip4_hash, ip6_to_del);
     CLIB_ERROR_ASSERT(p != 0);
     fip64_ip6_ip4_value_t *ip4_to_del = (fip64_ip6_ip4_value_t*) *p;
 
     clib_warning("Expiring mapping: %U -> %U",
       format_ip6_address, &ip6_to_del->ip6_src,
       format_ip4_address, &ip4_to_del->ip4_src);
-    cleanup_mappings(mapping, ip6_to_del, ip4_to_del);
+    cleanup_mappings(tenant, ip6_to_del, ip4_to_del);
   }
   ip6_value.lru_position = ip4_value.lru_position;
-  if (NULL != fip64_add_mapping(mapping, &ip6_value, &ip4_value))
+  if (NULL != fip64_add_mapping(tenant, &ip6_value, &ip4_value))
   {
     // failed when saving 4 <-> 6 mapping, return ip4 address to pool
     fip64_pool_release(tenant->pool, ip4_value);
@@ -247,7 +247,9 @@ fip64_lookup_ip4_to_ip6(fip64_main_t * fip64_main,
   }
 
   fip64_mapping_t *mapping = (fip64_mapping_t*) *p;
-  p = hash_get_mem(mapping->ip4_ip6_hash, &ip4->src_address);
+  fip64_tenant_t *tenant = (fip64_tenant_t*) mapping->tenant;
+
+  p = hash_get_mem(tenant->ip4_ip6_hash, &ip4->src_address);
   if (p)
   {
     *ip6_dst = mapping->fip6;
@@ -255,7 +257,7 @@ fip64_lookup_ip4_to_ip6(fip64_main_t * fip64_main,
     *ip6_src = ip6_value->ip6_src;
     ip4_value.ip4_src = ip4->src_address;
     ip4_value.lru_position = ip6_value->lru_position;
-    fip64_pool_lru_update(mapping->tenant->pool, &ip4_value);
+    fip64_pool_lru_update(tenant->pool, &ip4_value);
     return true;
   }
   return false;
@@ -352,7 +354,6 @@ fip64_delete(fip64_main_t *fip64_main,
 
   hash_unset(fip64_main->fixed4_mapping_hash, &old_mapping->ip4);
 
-  fip64_del_all_mappings(old_mapping);
   clib_mem_free(old_mapping);
 
   fip64_add_del_ip6_adjacency(fip64_main,
@@ -371,6 +372,7 @@ fip64_delete(fip64_main_t *fip64_main,
     clib_warning ("Removed pool[%d] %U",
                   tenant->table_id,
                   format_pool_range, tenant->pool);
+    fip64_del_all_mappings(tenant);
     fip64_pool_free (tenant->pool);
     clib_mem_free (tenant);
   }
@@ -452,6 +454,8 @@ fip64_add(fip64_main_t *fip64_main,
                                                            tenant->pool_end),
                                 IP4_ROUTE_FLAG_ADD,
                                 tenant->table_id);
+    tenant->ip6_ip4_hash = hash_create_mem(0, sizeof(ip6_address_t), sizeof(fip64_ip6_ip4_value_t));
+    tenant->ip4_ip6_hash = hash_create_mem(0, sizeof(ip4_address_t), sizeof(fip64_ip4_ip6_value_t));
   }
   else
   {
@@ -476,8 +480,6 @@ fip64_add(fip64_main_t *fip64_main,
   clib_warning ("Using pool[%d] = %U", tenant->table_id,
                 format_pool_range, tenant->pool);
 
-  mapping->ip6_ip4_hash = hash_create_mem(0, sizeof(ip6_address_t), sizeof(fip64_ip6_ip4_value_t));
-  mapping->ip4_ip6_hash = hash_create_mem(0, sizeof(ip4_address_t), sizeof(fip64_ip4_ip6_value_t));
   hash_set_mem(fip64_main->fip6_mapping_hash, &mapping->fip6, mapping);
 
   fip64_add_del_ip6_adjacency(fip64_main, &mapping->fip6, IP6_ROUTE_FLAG_ADD);
