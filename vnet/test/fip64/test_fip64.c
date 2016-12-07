@@ -26,6 +26,8 @@ extern clib_error_t *test_pool();
   if (error)                          \
     goto done;
 
+fip64_uuid_t zero_uuid;
+
 static void init_ip_mains(ip6_main_t * ip6_main,
                           ip4_main_t * ip4_main) {
   ip4_main->flow_hash_seed = 0xdeadbeef;
@@ -72,7 +74,8 @@ test_lookup ()
                          fixed4,
                          pool_start,
                          pool_end,
-                         0));
+                         0,
+                         zero_uuid));
 
   // lookup using ip6 params
   _assert(fip64_lookup_ip6_to_ip4(&fip64_main,
@@ -153,7 +156,8 @@ test_reuse_impl (u32 start, u32 end)
                          fixed4,
                          pool_start,
                          pool_end,
-                         2));
+                         2,
+                         zero_uuid));
 
   u32 step = 0;
   for (step = 0; step < 3; ++step)
