@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "5aa745d1_c5ce1c83",
+        "filename": "vnet/vnet/fip64/fip64_types.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1002751
+      },
+      "writtenOn": "2016-12-07T23:37:54Z",
+      "side": 1,
+      "message": "i think this will eventually be the downlink port idl but we can call it the virtual device id",
+      "range": {
+        "startLine": 57,
+        "startChar": 24,
+        "endLine": 57,
+        "endChar": 39
+      },
+      "revId": "be6409c54505c952230374fbe91bfb6abc0061b2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
