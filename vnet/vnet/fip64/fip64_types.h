@@ -22,6 +22,10 @@
 #include <vnet/ip/ip.h>
 #include <vlib/vlib.h>
 
+typedef struct {
+  u64 msb, lsb;
+} fip64_uuid_t;
+
 /* Pool structure to manage a subnet of IPv4 addresses. It will try to return
  * the same mapping for a given IPv6 address as long as it is available.
  */
@@ -86,6 +90,7 @@ typedef struct {
   uword *vrf_tenant_hash; /* vrf id to pool mapping */
   uword *fixed4_mapping_hash; /* fixed4/vrf to fip64 mapping */
   uword *fip6_mapping_hash; /* fip6 to fip64 mapping */
+  uword *uuid_tenant_hash; /* uuid to tenant hash */
   bool testing;
 } fip64_main_t;
 
@@ -150,5 +155,18 @@ typedef CLIB_PACKED (struct {
   u8 unused[28];
 }) ip4_fip64_pseudo_header_t;
 
+
+/* return value < 0 if id1 is lexicographically  less than id2
+ * return value > 0 if id1 is lexicographically  greater than id2
+ * return value = 0 if id1 is equal to id2
+ */
+extern bool
+fip64_uuidcmp(fip64_uuid_t id1, fip64_uuid_t id2);
+
+/* Assumes UUID in canonical form:
+ *  88888888-4444-4444-4444-cccccccccccc
+ */
+extern u8*
+fip64_format_uuid(u8 * s, va_list * args);
 
 #endif // included_fip64_types_h

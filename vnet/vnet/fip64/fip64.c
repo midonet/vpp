@@ -18,6 +18,36 @@
 
 fip64_main_t _fip64_main;
 
+bool
+fip64_uuidcmp(fip64_uuid_t id1, fip64_uuid_t id2)
+{
+  if (id1.msb < id2.msb) {
+    return -1;
+  } else if (id1.msb == id2.msb) {
+    if (id1.lsb < id2.lsb) {
+      return -1;
+    } else if (id1.lsb == id2.lsb) {
+      return 0;
+    } else {
+      return 1;
+    }
+  }
+  return 1;
+}
+
+u8*
+fip64_format_uuid(u8 * s, va_list * args)
+{
+  fip64_uuid_t *input = va_arg (*args, fip64_uuid_t *);
+  u64 a = input->msb >> 32;
+  u64 b = (input->msb << 32) >> 48;
+  u64 c = (input->msb << 48) >> 48;
+  u64 d = (input->lsb) >> 48;
+  u64 e = ((input->lsb) << 16) >> 16;
+  s = format(s, "%08x-%04x-%04x-%04x-%012llx", a, b, c, d, e);
+  return s;
+}
+
 static clib_error_t *
 fip64_init (vlib_main_t * vm)
 {
@@ -30,9 +60,14 @@ fip64_main_init(fip64_main_t * fip64_main, ip6_main_t * ip6_main, ip4_main_t * i
   fip64_main->testing = false;
   fip64_main->ip6_main = ip6_main;
   fip64_main->ip4_main = ip4_main;
-  fip64_main->fip6_mapping_hash = hash_create_mem(0, sizeof(ip6_address_t), sizeof(fip64_mapping_t));
-  fip64_main->fixed4_mapping_hash = hash_create_mem(0, sizeof(fip64_ip4key_t), sizeof(fip64_mapping_t));
-  fip64_main->vrf_tenant_hash = hash_create_mem(0, sizeof(u32), sizeof(fip64_tenant_t));
+  fip64_main->fip6_mapping_hash = hash_create_mem(0, sizeof(ip6_address_t),
+    sizeof(fip64_mapping_t));
+  fip64_main->fixed4_mapping_hash = hash_create_mem(0, sizeof(fip64_ip4key_t),
+    sizeof(fip64_mapping_t));
+  fip64_main->vrf_tenant_hash = hash_create_mem(0, sizeof(u32),
+    sizeof(fip64_tenant_t));
+  fip64_main->uuid_tenant_hash = hash_create_mem(0, sizeof(fip64_uuid_t),
+    sizeof(fip64_tenant_t));
   return 0;
 }
 
@@ -389,8 +424,12 @@ fip64_add(fip64_main_t *fip64_main,
           ip4_address_t fixed4,
           ip4_address_t pool_start,
           ip4_address_t pool_end,
-          u32 table_id)
+          u32 table_id,
+          fip64_uuid_t uuid)
 {
+  fip64_uuid_t zero_uuid;
+  memset(&zero_uuid, 0, sizeof(zero_uuid));
+
   /* check that tenant can be created beforehand */
   uword *p = hash_get_mem(fip64_main->vrf_tenant_hash, &table_id);
   fip64_tenant_t *tenant = p? (fip64_tenant_t*)*p : 0;
@@ -446,7 +485,9 @@ fip64_add(fip64_main_t *fip64_main,
     tenant->pool_end = pool_end;
     tenant->pool = fip64_pool_alloc(pool_start, pool_end);
     CLIB_ERROR_ASSERT (tenant->pool != NULL);
+    tenant->uuid = uuid;
     hash_set_mem(fip64_main->vrf_tenant_hash, &tenant->table_id, tenant);
+    hash_set_mem(fip64_main->uuid_tenant_hash, &tenant->uuid, tenant);
 
     fip64_add_del_ip4_adjacency(fip64_main,
                                 &tenant->pool_start,
@@ -473,6 +514,12 @@ fip64_add(fip64_main_t *fip64_main,
                       tenant->table_id,
                       format_pool_range, pool);
       }
+    if (fip64_uuidcmp(uuid, zero_uuid) && fip64_uuidcmp(uuid, tenant->uuid))
+    {
+      return clib_error_return (0, "Tenant UUID differs from the previous UUID \
+specified for VRF %d: %U", tenant->table_id,
+                           fip64_format_uuid, &tenant->uuid);
+    }
   }
 
   mapping->tenant = tenant;
@@ -515,13 +562,24 @@ fip64_add_command_fn (vlib_main_t * vm, unformat_input_t * input,
                                       unformat_ip4_address,
                                       &pool_end);
   unformat (line_input, "table %d", &table_id);
-  bool at_end = unformat_check_input (line_input) == UNFORMAT_END_OF_INPUT;
 
+  fip64_uuid_t uuid;
+  memset(&uuid, 0, sizeof(uuid));
+  {
+    u64 a, b, c, d, e;
+    a = b = c = d = e = 0ull;
+    unformat(line_input, "uuid %x-%x-%x-%x-%llx", &a, &b, &c, &d, &e);
+    uuid.msb = a << 32 | b << 16 | c;
+    uuid.lsb = d << 48 | e;
+  }
+
+  bool at_end = unformat_check_input (line_input) == UNFORMAT_END_OF_INPUT;
+  if (!at_end)
   unformat_free (line_input);
 
   if (!got_ips || !at_end)
   {
-    return clib_error_return (0, "invalid input: expected <ip6_fip6> <ip4_fixed4> [pool <ip4_pool_start> <ip4_pool_end>] [table <n>]");
+    return clib_error_return (0, "invalid input: expected <ip6_fip6> <ip4_fixed4> [pool <ip4_pool_start> <ip4_pool_end>] [table <n>] [uuid aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee]");
   }
 
   host_pool_start = clib_net_to_host_u32(pool_start.as_u32);
@@ -537,7 +595,8 @@ start, got: %U - %U", format_ip4_address, &host_pool_start,
                    fixed4,
                    pool_start,
                    pool_end,
-                   table_id);
+                   table_id,
+                   uuid);
 }
 
 static clib_error_t*
@@ -595,16 +654,17 @@ fip64_show_command_fn (vlib_main_t * vm, unformat_input_t * input,
   );
 
   vlib_cli_output (vm, "\nDestination IP6\n");
-  vlib_cli_output (vm, "%-10s%-40s%-32s\n",
-                   "TABLE ID", "DST IP6", "DST IP4");
+  vlib_cli_output (vm, "%-10s%-40s%-32s%-40s\n",
+                   "TABLE ID", "DST IP6", "DST IP4", "TENANT UUID");
   hash_foreach(k, v, _fip64_main.fip6_mapping_hash,                           \
     u8 * s = 0;                                                               \
     ip6_address_t *fip = (ip6_address_t*) k;                                  \
     fip64_mapping_t * mapping  = (fip64_mapping_t*) v;                        \
-    s = format (s, "%-10u%-40U%-32U\n",                                       \
+    s = format (s, "%-10u%-40U%-32U%-40U\n",                                  \
                    mapping->tenant->table_id,                                 \
                    format_ip6_address, fip,                                   \
-                   format_ip4_address, &mapping->ip4.fixed);                  \
+                   format_ip4_address, &mapping->ip4.fixed,                   \
+                   fip64_format_uuid, &mapping->tenant->uuid);                \
     vlib_cli_output(vm, (char*) s);                                           \
     vec_free(s);
   );
@@ -634,14 +694,14 @@ VLIB_CLI_COMMAND(fip64_show_command, static) = {
  * This command adds the mapping from an ip6 address to an ip4
  * address and also adds the corresponding adjacencies to the ip6
  * and ip4 routing tables. It also allows to specify the VRF table for v4
- * adjacency
+ * adjacency and UUID of the corresponding tenant router
  * WARNING: we do not keep track of reference counts on the adjacencies
  * added. We will add support for this in later stages.
  */
 /* *INDENT-OFF* */
 VLIB_CLI_COMMAND(fip64_add_command, static) = {
   .path = "fip64 add",
-  .short_help = "<ip6_fip6> <ip4_fixed4> [pool <ip4_pool_start> <ip4_pool_end>] [table <n>]\n\
+  .short_help = "<ip6_fip6> <ip4_fixed4> [pool <ip4_pool_start> <ip4_pool_end>] [table <n>] [uuid 88888888-4444-4444-4444-cccccccccccc]\n\
 \t\t\t\t pool can be omitted if there is already one specified for given table; default table is 0",
   .function = fip64_add_command_fn,
 };
