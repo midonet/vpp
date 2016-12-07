@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "5aa745d1_253140a3",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 10,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-12-07T22:30:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5aa745d1_455e8cea",
+      "range": {
+        "startLine": 10,
+        "startChar": 37,
+        "endLine": 10,
+        "endChar": 45
+      },
+      "revId": "066b954742ae46f37ea7b9d772b24eff51428449",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5aa745d1_6552a8df",
         "filename": "/COMMIT_MSG",
         "patchSetId": 2
@@ -36,6 +60,30 @@
       "writtenOn": "2016-12-07T22:11:10Z",
       "side": 1,
       "message": "augmented",
+      "range": {
+        "startLine": 11,
+        "startChar": 35,
+        "endLine": 11,
+        "endChar": 43
+      },
+      "revId": "066b954742ae46f37ea7b9d772b24eff51428449",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5aa745d1_05264468",
+        "filename": "/COMMIT_MSG",
+        "patchSetId": 2
+      },
+      "lineNbr": 11,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-12-07T22:30:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5aa745d1_6552a8df",
       "range": {
         "startLine": 11,
         "startChar": 35,
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "5aa745d1_e52a382c",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 21,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-12-07T22:30:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5aa745d1_c5f97cca",
+      "range": {
+        "startLine": 21,
+        "startChar": 0,
+        "endLine": 21,
+        "endChar": 4
+      },
+      "revId": "066b954742ae46f37ea7b9d772b24eff51428449",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5aa745d1_45056cc0",
         "filename": "vnet/vnet/fip64/fip64.c",
         "patchSetId": 2
@@ -82,6 +154,30 @@
       "writtenOn": "2016-12-07T22:11:10Z",
       "side": 1,
       "message": "body will be simpler using a helper method int cmp(u64 a, u64 b)",
+      "range": {
+        "startLine": 22,
+        "startChar": 0,
+        "endLine": 22,
+        "endChar": 13
+      },
+      "revId": "066b954742ae46f37ea7b9d772b24eff51428449",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5aa745d1_c5205c4c",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 22,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-12-07T22:30:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5aa745d1_45056cc0",
       "range": {
         "startLine": 22,
         "startChar": 0,
@@ -117,6 +213,30 @@
     },
     {
       "key": {
+        "uuid": "5aa745d1_a51d5011",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 47,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-12-07T22:30:07Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "5aa745d1_055884f9",
+      "range": {
+        "startLine": 46,
+        "startChar": 2,
+        "endLine": 47,
+        "endChar": 62
+      },
+      "revId": "066b954742ae46f37ea7b9d772b24eff51428449",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "5aa745d1_a56f9091",
         "filename": "vnet/vnet/fip64/fip64.c",
         "patchSetId": 2
@@ -128,6 +248,30 @@
       "writtenOn": "2016-12-07T22:11:10Z",
       "side": 1,
       "message": "why only free line_input if not at end?",
+      "range": {
+        "startLine": 578,
+        "startChar": 2,
+        "endLine": 578,
+        "endChar": 14
+      },
+      "revId": "066b954742ae46f37ea7b9d772b24eff51428449",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5aa745d1_851a5416",
+        "filename": "vnet/vnet/fip64/fip64.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 578,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-12-07T22:30:07Z",
+      "side": 1,
+      "message": "No idea :)\nRemove this line",
+      "parentUuid": "5aa745d1_a56f9091",
       "range": {
         "startLine": 578,
         "startChar": 2,
