@@ -22,6 +22,30 @@
       "revId": "be6409c54505c952230374fbe91bfb6abc0061b2",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "5aa745d1_6a183085",
+        "filename": "vnet/vnet/fip64/fip64_types.h",
+        "patchSetId": 4
+      },
+      "lineNbr": 57,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-12-08T17:05:16Z",
+      "side": 1,
+      "message": "Done. Comment message is also updated",
+      "parentUuid": "5aa745d1_c5ce1c83",
+      "range": {
+        "startLine": 57,
+        "startChar": 24,
+        "endLine": 57,
+        "endChar": 39
+      },
+      "revId": "be6409c54505c952230374fbe91bfb6abc0061b2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
     }
   ]
 }
