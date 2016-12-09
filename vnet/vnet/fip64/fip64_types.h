@@ -22,10 +22,6 @@
 #include <vnet/ip/ip.h>
 #include <vlib/vlib.h>
 
-typedef struct {
-  u64 msb, lsb;
-} fip64_uuid_t;
-
 /* Pool structure to manage a subnet of IPv4 addresses. It will try to return
  * the same mapping for a given IPv6 address as long as it is available.
  */
@@ -48,13 +44,13 @@ typedef struct {
 
 typedef struct {
   u32 table_id;
+  u32 vni; /* Unique for each tenant. Store here to make hash key persistent */
   ip4_address_t pool_start,
                 pool_end;
   fip64_pool_t *pool;
   u32 num_references;
   uword *ip6_ip4_hash; /* ip6 src address to fip64_ip6_ip4_value_t map */
   uword *ip4_ip6_hash; /* ip4 (src,dst) address to ip6 (src,dst) address map */
-  fip64_uuid_t uuid; /* Midolman virtual device id */
 } fip64_tenant_t;
 
 typedef struct {
@@ -87,10 +83,10 @@ typedef struct {
 typedef struct {
   ip6_main_t *ip6_main;
   ip4_main_t *ip4_main;
-  uword *vrf_tenant_hash; /* vrf id to pool mapping */
+  uword *vni_tenant_hash; /* vrf id to pool mapping */
+  uword *vrf_tenant_hash; /* vrf id to pool mapping. Can be removed, once midolman will start to use VNI */
   uword *fixed4_mapping_hash; /* fixed4/vrf to fip64 mapping */
   uword *fip6_mapping_hash; /* fip6 to fip64 mapping */
-  uword *uuid_tenant_hash; /* uuid to tenant hash */
   bool testing;
 } fip64_main_t;
 
@@ -154,19 +150,5 @@ typedef CLIB_PACKED (struct {
   //sizeof(ip6) + sizeof(ip_frag) - sizeof(ip4)
   u8 unused[28];
 }) ip4_fip64_pseudo_header_t;
-
-
-/* return value < 0 if id1 is lexicographically  less than id2
- * return value > 0 if id1 is lexicographically  greater than id2
- * return value = 0 if id1 is equal to id2
- */
-extern int
-fip64_uuidcmp(fip64_uuid_t id1, fip64_uuid_t id2);
-
-/* Assumes UUID in canonical form:
- *  88888888-4444-4444-4444-cccccccccccc
- */
-extern u8*
-fip64_format_uuid(u8 * s, va_list * args);
 
 #endif // included_fip64_types_h
