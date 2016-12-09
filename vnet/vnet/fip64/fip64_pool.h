@@ -71,4 +71,11 @@ fip64_pool_lru_update(fip64_pool_t* pool, fip64_ip6_ip4_value_t *ip4_value);
 u8 *
 format_pool_range (u8 * s, va_list * va);
 
+
+/* fip64_pool_contains (pool, address)
+ * Returns true if the supplied address belongs to the pool
+ */
+bool
+fip64_pool_contains (fip64_pool_t *pool, ip4_address_t address);
+
 #endif // included_fip64_pool_h
