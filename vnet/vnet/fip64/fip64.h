@@ -12,6 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef included_fip64_fip64_h
+#define included_fip64_fip64_h
 
 #include <vppinfra/error.h>
 
@@ -19,10 +21,18 @@
 #include "fip64_pool.h"
 
 /**
+ * UDP port to listen for flow-state updates
+ */
+#define FIP64_CONTROL_PORT_NUMBER 11111
+
+/**
  * Initial fip64 main structure. Visible for unit tests.
  */
 extern clib_error_t *
-fip64_main_init(fip64_main_t * fip64_main, ip6_main_t * ip6_main, ip4_main_t * ip4_main);
+fip64_main_init(vlib_main_t *vm,
+                fip64_main_t *fip64_main,
+                ip6_main_t *ip6_main,
+                ip4_main_t *ip4_main);
 
 /**
  * Add an IP6 mapping for a fixed IP4
@@ -90,12 +100,30 @@ print_ip6_ip4_mapping(fip64_main_t *fip64_main, ip6_address_t *fip6);
 
 u8 *format_fip64_trace (u8 * s, va_list * args);
 
+/*
+ * Create/Delete/Lookup functions for ip6-ip4 mappings
+ */
+
+clib_error_t *
+fip64_add_mapping(fip64_tenant_t *tenant,
+                  fip64_ip4_ip6_value_t * ip6_input,
+                  fip64_ip6_ip4_value_t * ip4_input);
+
+
+void
+fip64_remove_mapping(fip64_tenant_t *tenant,
+                     fip64_ip4_ip6_value_t *ip6_value,
+                     fip64_ip6_ip4_value_t *ip4_value);
+
 extern vlib_node_registration_t ip4_fip64_node;
 extern vlib_node_registration_t ip4_fip64_icmp_node;
 extern vlib_node_registration_t ip4_fip64_tcp_udp_node;
 
 extern vlib_node_registration_t ip6_fip64_node;
 extern vlib_node_registration_t ip6_fip64_icmp_node;
+
+extern vlib_node_registration_t flowstate_fip64_node;
+
 extern ip4_main_t ip4_main;
 
 /*
@@ -106,3 +134,4 @@ extern ip4_main_t ip4_main;
  * indent-tabs-mode: nil
  * End:
  */
+#endif // included_fip64_fip64_h
