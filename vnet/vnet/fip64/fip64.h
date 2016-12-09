@@ -40,7 +40,7 @@ fip64_add(fip64_main_t *fip64_main,
           ip4_address_t pool_start,
           ip4_address_t pool_end,
           u32 table_id,
-          fip64_uuid_t tenant_uuid);
+          u32 vni);
 
 /**
  * Remove an IP6 mapping
