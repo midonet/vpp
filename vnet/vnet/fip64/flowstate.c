@@ -21,8 +21,8 @@ extern fip64_main_t _fip64_main;
 
 typedef enum
 {
-  CONTROL_FIP64_NEXT_DROP,
-  CONTROL_FIP64_N_NEXT,
+  FLOWSTATE_FIP64_NEXT_DROP,
+  FLOWSTATE_FIP64_N_NEXT,
 } lisp_cp_lookup_next_t;
 
 
@@ -296,6 +296,48 @@ flowstate_fip64 (vlib_main_t *vm, vlib_node_runtime_t *node, vlib_frame_t *frame
   return frame->n_vectors;
 }
 
+/* function to generate a flowstate packet
+ */
+u16
+fip64_make_flowstate_packet(u8 *data, void *context)
+{
+  fip64_flowstate_msg_t *payload = (fip64_flowstate_msg_t*) context;
+  size_t payload_length = sizeof(fip64_flowstate_msg_t);
+
+  ip4_header_t *ip = (ip4_header_t*) data;
+  udp_header_t *udp = (udp_header_t*) &ip[1];
+  u8 *body = (u8*) &udp[1];
+
+  memset(data, 0, body - data);
+
+
+  ip->ip_version_and_header_length = 0x45;
+  ip->ttl = 254;
+  ip->protocol = IP_PROTOCOL_UDP;
+  ip->src_address.as_u32 = clib_host_to_net_u32(FLOWSTATE_SRC_ADDRESS);
+  ip->dst_address.as_u32 = clib_host_to_net_u32(FLOWSTATE_DST_ADDRESS);
+
+  udp->src_port = udp->dst_port = clib_host_to_net_u16 (FLOWSTATE_PORT_NUMBER);
+
+  size_t length = payload_length + sizeof(*udp);
+  udp->length = clib_host_to_net_u16 (length);
+
+  clib_memcpy (body, payload, payload_length);
+
+  ip_csum_t csum;
+  csum = ip_incremental_checksum (0, udp, length);
+  csum = ip_csum_with_carry (csum, udp->length);
+  csum = ip_csum_with_carry (csum,
+                             clib_host_to_net_u16 (IP_PROTOCOL_UDP));
+  csum = ip_csum_with_carry (csum, *((u64 *) (&ip->src_address)));
+  udp->checksum = ~ip_csum_fold (csum);
+
+  length += sizeof(*ip);
+  ip->length = clib_host_to_net_u16 (length);
+  ip->checksum = ip4_header_checksum (ip);
+  return length;
+}
+
 static char *fip64_error_strings[] = {
 #define _(sym,string) string,
   foreach_fip64_error
@@ -313,9 +355,9 @@ VLIB_REGISTER_NODE(flowstate_fip64_node) = {
   .n_errors = FIP64_N_ERROR,
   .error_strings = fip64_error_strings,
 
-  .n_next_nodes = CONTROL_FIP64_N_NEXT,
+  .n_next_nodes = FLOWSTATE_FIP64_N_NEXT,
   .next_nodes = {
-    [CONTROL_FIP64_NEXT_DROP] = "error-drop",
+    [FLOWSTATE_FIP64_NEXT_DROP] = "error-drop",
   },
 };
 /* *INDENT-ON* */

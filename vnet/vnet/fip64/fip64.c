@@ -17,6 +17,8 @@
 #include <vnet/ip/lookup.h>
 #include <vnet/ip/udp.h>
 
+#include "flowstate.h"
+
 fip64_main_t _fip64_main;
 
 static ip4_address_t zero4;
@@ -45,9 +47,12 @@ fip64_main_init(vlib_main_t *vm,
   fip64_main->vrf_tenant_hash = hash_create_mem(0, sizeof(u32),
     sizeof(fip64_tenant_t));
 
+  // notification packets disabled until explicitly enabled with `fip64 sync`
+  fip64_main->pkinject = 0;
+
   if (!fip64_main->testing)
   {
-    udp_register_dst_port (vm, FIP64_CONTROL_PORT_NUMBER,
+    udp_register_dst_port (vm, FLOWSTATE_PORT_NUMBER,
                            flowstate_fip64_node.index, 1 /* is_ipv4 */);
   }
   return 0;
@@ -182,19 +187,38 @@ fip64_del_all_mappings(fip64_tenant_t * tenant)
   return 0;
 }
 
+void
+send_flowstate(pkinject_t *injector,
+               u8 operation,
+               ip6_address_t *src6,
+               ip4_address_t map4,
+               ip4_address_t fixed4,
+               u32 vni,
+               u8 flags)
+{
+  fip64_flowstate_msg_t msg;
+  memset (&msg, 0, sizeof(msg));
+  fip64_flowstate_set_op (&msg, operation);
+  msg.version = FLOWSTATE_CURRENT_VERSION;
+  msg.vni = clib_host_to_net_u32 (vni);
+  msg.client_ipv6 = *src6;
+  msg.allocated_ipv4 = map4;
+  msg.fixed_ipv4 = fixed4;
+
+  pkinject_by_callback (injector,
+                        fip64_make_flowstate_packet, &msg,
+                        flags /*| PKINJECT_FLAG_TRACE*/ );
+}
+
 bool
 fip64_lookup_ip6_to_ip4(fip64_main_t * fip64_main,
                         ip6_address_t * ip6_src, ip6_address_t * ip6_dst,
                         fip64_ip4_t * ip4)
 {
-  fip64_ip6_ip4_value_t ip4_value;
-  fip64_ip4_ip6_value_t ip6_value;
+  fip64_ip6_ip4_value_t ip4_value; // TODO: cleanup
 
   ip4_value.ip4_src.as_u32 = 0;
   ip4_value.lru_position = 0;
-
-  memcpy(ip6_value.ip6_src.as_u8, ip6_src->as_u8, sizeof(*ip6_src));
-  ip6_value.lru_position = 0;
 
   // search dest ip6 in configured FIPs
   uword *p = hash_get_mem(fip64_main->fip6_mapping_hash, ip6_dst);
@@ -236,8 +260,23 @@ fip64_lookup_ip6_to_ip4(fip64_main_t * fip64_main,
     clib_warning("Expiring mapping: %U -> %U",
       format_ip6_address, &ip6_to_del->ip6_src,
       format_ip4_address, &ip4_to_del->ip4_src);
+
+    /* send flowstate for this expired mapping */
+    if (fip64_main->pkinject != NULL)
+    {
+      send_flowstate (fip64_main->pkinject,
+                      FLOWSTATE_OP_DEL,
+                      &ip6_to_del->ip6_src,
+                      ip4_to_del->ip4_src,
+                      ip4->dst_address,
+                      tenant->vni,
+                      0);
+    }
+
     fip64_remove_mapping(tenant, ip6_to_del, ip4_to_del);
   }
+  fip64_ip4_ip6_value_t ip6_value;
+  ip6_value.ip6_src = *ip6_src;
   ip6_value.lru_position = ip4_value.lru_position;
   if (NULL != fip64_add_mapping(tenant, &ip6_value, &ip4_value))
   {
@@ -245,6 +284,19 @@ fip64_lookup_ip6_to_ip4(fip64_main_t * fip64_main,
     fip64_pool_release(tenant->pool, ip4_value);
     return false;
   }
+
+  /* send flowstate for this new mapping */
+  if (fip64_main->pkinject != NULL)
+  {
+    send_flowstate (fip64_main->pkinject,
+                    FLOWSTATE_OP_ADD,
+                    &ip6_value.ip6_src,
+                    ip4->src_address,
+                    ip4->dst_address,
+                    tenant->vni,
+                    PKINJECT_FLAG_FLUSH);
+  }
+
   return true;
 }
 
@@ -632,6 +684,60 @@ fip64_show_command_fn (vlib_main_t * vm, unformat_input_t * input,
   return 0;
 }
 
+u32
+get_table_index_by_table_id(u32 table_id) {
+  u32 result = find_ip4_fib_by_table_index_or_id (&ip4_main, table_id, 0) - ip4_main.fibs;
+  return result;
+}
+
+static clib_error_t*
+fip64_sync_enable (vlib_main_t * vm, vnet_main_t *vnm, u32 vrf_id)
+{
+  fip64_main_t *fip64_main = &_fip64_main;
+  u32 source_if_or_table = 1,
+      dest_if_or_table = get_table_index_by_table_id (vrf_id);
+
+  if (fip64_main->pkinject != 0)
+  {
+    return clib_error_return (0, "Sync already enabled.");
+  }
+
+  vlib_node_t *node = vlib_get_node_by_name (vm, (u8*)"ip4-input");
+
+  fip64_main->pkinject = pkinject_alloc (vm,
+                                         node->index,
+                                         source_if_or_table,
+                                         dest_if_or_table);
+  return fip64_main->pkinject != 0? 0
+          : clib_error_return (0, "Unable to create packet injection");
+}
+
+static clib_error_t*
+fip64_sync_command_fn (vlib_main_t * vm, unformat_input_t * input,
+                       vlib_cli_command_t * cmd)
+{
+  vnet_main_t *vnm = vnet_get_main ();
+  clib_error_t *error = 0;
+  unformat_input_t _line_input, *line_input = &_line_input;
+  u32 vrf_id = ~0;
+
+  if (!unformat_user (input, unformat_line_input, line_input))
+    return 0;
+
+  if (!unformat (line_input, "%d", &vrf_id))
+  {
+    error = clib_error_return (0, "invalid input: expected VRF id.");
+    goto end;
+  }
+
+  error = fip64_sync_enable (vm, vnm, vrf_id);
+
+end:
+  unformat_free (line_input);
+  return error;
+}
+
+
 /**
  * Show the current ip6 to ip4 mappins (and reverse lookup for debugging)
  *
@@ -681,6 +787,14 @@ VLIB_CLI_COMMAND(fip64_del_command, static) = {
   .path = "fip64 del",
   .short_help = "<ip6_fip6>",
   .function = fip64_del_command_fn,
+};
+/* *INDENT-ON* */
+
+/* *INDENT-OFF* */
+VLIB_CLI_COMMAND(fip64_sync_command, static) = {
+  .path = "fip64 sync",
+  .short_help = "<VRF id>",
+  .function = fip64_sync_command_fn,
 };
 /* *INDENT-ON* */
 

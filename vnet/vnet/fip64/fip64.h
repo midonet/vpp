@@ -21,11 +21,6 @@
 #include "fip64_pool.h"
 
 /**
- * UDP port to listen for flow-state updates
- */
-#define FIP64_CONTROL_PORT_NUMBER 11111
-
-/**
  * Initial fip64 main structure. Visible for unit tests.
  */
 extern clib_error_t *

@@ -22,6 +22,8 @@
 #include <vnet/ip/ip.h>
 #include <vlib/vlib.h>
 
+#include "pkinject.h"
+
 /* Pool structure to manage a subnet of IPv4 addresses. It will try to return
  * the same mapping for a given IPv6 address as long as it is available.
  */
@@ -87,6 +89,7 @@ typedef struct {
   uword *vrf_tenant_hash; /* vrf id to pool mapping. Can be removed, once midolman will start to use VNI */
   uword *fixed4_mapping_hash; /* fixed4/vrf to fip64 mapping */
   uword *fip6_mapping_hash; /* fip6 to fip64 mapping */
+  pkinject_t *pkinject;
   bool testing;
 } fip64_main_t;
 

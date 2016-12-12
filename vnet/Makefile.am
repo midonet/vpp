@@ -366,11 +366,13 @@ vnet/fip64/fip64.c                              \
 vnet/fip64/flowstate.c                          \
 vnet/fip64/ip4_fip64.c                          \
 vnet/fip64/ip6_fip64.c                          \
-vnet/fip64/fip64_pool.c
+vnet/fip64/fip64_pool.c                         \
+vnet/fip64/pkinject.c
 
 nobase_include_HEADERS +=                       \
 vnet/fip64/fip64.h                              \
-vnet/fip64/fip64_pool.h
+vnet/fip64/fip64_pool.h                         \
+vnet/fip64/pkinject.h
 
 if ENABLE_TESTS
 

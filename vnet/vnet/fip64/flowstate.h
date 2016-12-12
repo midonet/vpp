@@ -28,8 +28,17 @@ struct _fip64_flowstate_msg_t {
 #define FLOWSTATE_VERSION_MIN 1
 #define FLOWSTATE_VERSION_MAX 1
 
+#define FLOWSTATE_CURRENT_VERSION 1
+
 #define FLOWSTATE_OP_ADD 0
 #define FLOWSTATE_OP_DEL 1
+
+/**
+ * UDP port to listen for flow-state updates
+ */
+#define FLOWSTATE_PORT_NUMBER 11111
+#define FLOWSTATE_SRC_ADDRESS 0xAC100002
+#define FLOWSTATE_DST_ADDRESS 0xAC100001
 
 #define fip64_flowstate_get_op(MSG) ( ((MSG)->flags[0] >> 6) )
 #define fip64_flowstate_set_op(MSG, OP) ( (MSG)->flags[0] = ((OP) << 6) )
@@ -38,5 +47,8 @@ typedef struct _fip64_flowstate_msg_t fip64_flowstate_msg_t;
 
 extern bool
 fip64_flowstate_message (fip64_main_t*, u8*, u16);
+
+extern u16
+fip64_make_flowstate_packet(u8*, void*);
 
 #endif // included_fip64_flowstate_h
