@@ -18,6 +18,8 @@
 
 fip64_main_t _fip64_main;
 
+static ip4_address_t zero4;
+
 static clib_error_t *
 fip64_init (vlib_main_t * vm)
 {
@@ -322,19 +324,6 @@ fip64_add_del_ip6_adjacency(fip64_main_t * fip64_main,
   ip6_add_del_route (fip64_main->ip6_main, &args6);
 }
 
-static u8
-derive_net_prefix_from_range(ip4_address_t start, ip4_address_t end)
-{
-  u32 diff = clib_net_to_host_u32(end.as_u32)
-           ^ clib_net_to_host_u32(start.as_u32);
-  if (diff)
-  {
-    u32 msb = __builtin_clz(diff);
-    return msb != 31? msb : 30;
-  }
-  return 32;
-}
-
 /**
 * Deletes existing fip6
 *
@@ -367,9 +356,7 @@ fip64_delete(fip64_main_t *fip64_main,
   if (! --tenant->num_references)
   {
     fip64_add_del_ip4_adjacency(fip64_main,
-                      &tenant->pool_start,
-                      derive_net_prefix_from_range(tenant->pool_start,
-                                                   tenant->pool_end),
+                      &zero4, 0,
                       IP4_ROUTE_FLAG_DEL,
                       tenant->table_id);
 
@@ -458,9 +445,7 @@ fip64_add(fip64_main_t *fip64_main,
     hash_set_mem(fip64_main->vrf_tenant_hash, &tenant->table_id, tenant);
 
     fip64_add_del_ip4_adjacency(fip64_main,
-                                &tenant->pool_start,
-                                derive_net_prefix_from_range(tenant->pool_start,
-                                                           tenant->pool_end),
+                                &zero4, 0,
                                 IP4_ROUTE_FLAG_ADD,
                                 tenant->table_id);
     tenant->ip6_ip4_hash = hash_create_mem(0, sizeof(ip6_address_t), sizeof(fip64_ip6_ip4_value_t));
