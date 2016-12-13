@@ -110,6 +110,9 @@ fip64_remove_mapping(fip64_tenant_t *tenant,
                      fip64_ip4_ip6_value_t *ip6_value,
                      fip64_ip6_ip4_value_t *ip4_value);
 
+u32
+fip64_get_table_index (u32 table_id);
+
 extern vlib_node_registration_t ip4_fip64_node;
 extern vlib_node_registration_t ip4_fip64_icmp_node;
 extern vlib_node_registration_t ip4_fip64_tcp_udp_node;

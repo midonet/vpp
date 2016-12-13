@@ -109,7 +109,8 @@ ip6_fip64 (vlib_main_t * vm, vlib_node_runtime_t * node, vlib_frame_t * frame)
           vnet_buffer (p0)->map_t.v6.saddr = ip4_mapping.src_address.as_u32;
           vnet_buffer (p0)->map_t.v6.daddr = ip4_mapping.dst_address.as_u32;
           // To make ip4_lookup search the correct VRF
-          vnet_buffer (p0)->sw_if_index[VLIB_TX] = ip4_mapping.table_id;
+          u32 table_index = fip64_get_table_index (ip4_mapping.table_id);
+          vnet_buffer (p0)->sw_if_index[VLIB_TX] = table_index;
           vnet_buffer (p0)->map_t.mtu = ~0;
 
           if (PREDICT_FALSE ( p0->flags & VLIB_BUFFER_IS_TRACED ))

@@ -685,7 +685,7 @@ fip64_show_command_fn (vlib_main_t * vm, unformat_input_t * input,
 }
 
 u32
-get_table_index_by_table_id(u32 table_id) {
+fip64_get_table_index (u32 table_id) {
   u32 result = find_ip4_fib_by_table_index_or_id (&ip4_main, table_id, 0) - ip4_main.fibs;
   return result;
 }
@@ -695,7 +695,7 @@ fip64_sync_enable (vlib_main_t * vm, vnet_main_t *vnm, u32 vrf_id)
 {
   fip64_main_t *fip64_main = &_fip64_main;
   u32 source_if_or_table = 1,
-      dest_if_or_table = get_table_index_by_table_id (vrf_id);
+      dest_if_or_table = fip64_get_table_index (vrf_id);
 
   if (fip64_main->pkinject != 0)
   {
