@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "3ab451fb_59be8400",
+        "filename": "vnet/vnet/fip64/flowstate.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-12-13T11:29:33Z",
+      "side": 1,
+      "message": "This is for the case were we receive a mapping:\n\nip6_client \u003c--\u003e ip4\n\nbut we already have a mapping for that client:\n\nip6_client \u003c--\u003e ip4_from_our_pool\n\nin this case we ignore the mapping and keep using our pool.",
+      "parentUuid": "3ab451fb_59b9e42d",
+      "range": {
+        "startLine": 106,
+        "startChar": 4,
+        "endLine": 107,
+        "endChar": 64
+      },
+      "revId": "ad24a92c2af88a830f75321336dd28076bbec920",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "3ab451fb_19823c53",
         "filename": "vnet/vnet/fip64/flowstate.c",
         "patchSetId": 2
@@ -48,6 +72,30 @@
     },
     {
       "key": {
+        "uuid": "3ab451fb_994bec2b",
+        "filename": "vnet/vnet/fip64/flowstate.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-12-13T11:29:33Z",
+      "side": 1,
+      "message": "This is the case were we receive:\n\nip6_client_a \u003c--\u003e ip4\n\nbut we already have a mapping for that ip4 to a different client:\n\nip6_client_b \u003c--\u003e ip4\n\nIn this case we remove our existing mapping and apply the received one.\n\nThis is because this ip4 address is not in our pool, so we are not the owners of the mappings for it, it\u0027s another vpp instance somewhere. If it decided to give this mapping to someone else we just go with it. It probably means that we missed an expiration message.",
+      "parentUuid": "3ab451fb_19823c53",
+      "range": {
+        "startLine": 116,
+        "startChar": 1,
+        "endLine": 127,
+        "endChar": 57
+      },
+      "revId": "ad24a92c2af88a830f75321336dd28076bbec920",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "3ab451fb_e6112f5f",
         "filename": "vnet/vnet/fip64/flowstate.h",
         "patchSetId": 2
@@ -59,6 +107,30 @@
       "writtenOn": "2016-12-13T10:43:04Z",
       "side": 1,
       "message": "Modifies too much bits, should be something like:\nop_mask \u003d 3 \u003c\u003c 6;\nflags[0] \u0026\u003d ~op_mask;\nflags[0] |\u003d OP \u003c\u003c 6",
+      "range": {
+        "startLine": 35,
+        "startChar": 40,
+        "endLine": 35,
+        "endChar": 73
+      },
+      "revId": "ad24a92c2af88a830f75321336dd28076bbec920",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3ab451fb_997c0c22",
+        "filename": "vnet/vnet/fip64/flowstate.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 1008620
+      },
+      "writtenOn": "2016-12-13T11:29:33Z",
+      "side": 1,
+      "message": "Ok. Let\u0027s leave it as is as those bits are not used.",
+      "parentUuid": "3ab451fb_e6112f5f",
       "range": {
         "startLine": 35,
         "startChar": 40,
