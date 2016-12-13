@@ -68,6 +68,7 @@ fip64_pool_add_entry(fip64_pool_t *pool,
                      uword index,
                      u32 lru_position)
 {
+  CLIB_ERROR_ASSERT (lru_position != ~0);
   -- pool->num_free;
   clib_bitmap_set(pool->used_map, index, 1);
   clib_dlist_addtail (pool->list_pool, 0, lru_position);
@@ -167,9 +168,12 @@ fip64_pool_release (fip64_pool_t *pool, fip64_ip6_ip4_value_t ip4_value)
 void
 fip64_pool_lru_update(fip64_pool_t* pool, fip64_ip6_ip4_value_t *ip4_value)
 {
-  dlist_elt_t *list_pool = pool->list_pool;
-  clib_dlist_remove (list_pool, ip4_value->lru_position);
-  clib_dlist_addtail (list_pool, 0, ip4_value->lru_position);
+  if (ip4_value->lru_position != ~0)
+  {
+    dlist_elt_t *list_pool = pool->list_pool;
+    clib_dlist_remove (list_pool, ip4_value->lru_position);
+    clib_dlist_addtail (list_pool, 0, ip4_value->lru_position);
+  }
 }
 
 void
@@ -178,5 +182,12 @@ fip64_pool_free (fip64_pool_t *pool)
   clib_bitmap_free (pool->used_map);
   pool_free(pool->list_pool);
   clib_mem_free (pool);
+}
+
+bool
+fip64_pool_contains (fip64_pool_t *pool, ip4_address_t address)
+{
+  u32 addr = clib_net_to_host_u32 (address.as_u32);
+  return pool->start_address <= addr && addr <= pool->end_address;
 }
 

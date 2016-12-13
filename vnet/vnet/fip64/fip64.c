@@ -15,6 +15,7 @@
 
 #include "fip64.h"
 #include <vnet/ip/lookup.h>
+#include <vnet/ip/udp.h>
 
 fip64_main_t _fip64_main;
 
@@ -23,13 +24,16 @@ static ip4_address_t zero4;
 static clib_error_t *
 fip64_init (vlib_main_t * vm)
 {
-  return fip64_main_init(&_fip64_main, &ip6_main, &ip4_main);
+  return fip64_main_init(vm, &_fip64_main, &ip6_main, &ip4_main);
 }
 
 clib_error_t *
-fip64_main_init(fip64_main_t * fip64_main, ip6_main_t * ip6_main, ip4_main_t * ip4_main)
+fip64_main_init(vlib_main_t *vm,
+                fip64_main_t *fip64_main,
+                ip6_main_t *ip6_main,
+                ip4_main_t *ip4_main)
 {
-  fip64_main->testing = false;
+  fip64_main->testing = vm == NULL;
   fip64_main->ip6_main = ip6_main;
   fip64_main->ip4_main = ip4_main;
   fip64_main->fip6_mapping_hash = hash_create_mem(0, sizeof(ip6_address_t),
@@ -40,6 +44,12 @@ fip64_main_init(fip64_main_t * fip64_main, ip6_main_t * ip6_main, ip4_main_t * i
     sizeof(fip64_tenant_t));
   fip64_main->vrf_tenant_hash = hash_create_mem(0, sizeof(u32),
     sizeof(fip64_tenant_t));
+
+  if (!fip64_main->testing)
+  {
+    udp_register_dst_port (vm, FIP64_CONTROL_PORT_NUMBER,
+                           flowstate_fip64_node.index, 1 /* is_ipv4 */);
+  }
   return 0;
 }
 
@@ -134,8 +144,8 @@ print_ip6_ip4_mapping(fip64_main_t *fip64_main,
 /*
  * Modifies hash, so better not to use from hash_foreach() loop
 */
-static void
-cleanup_mappings(fip64_tenant_t *tenant,
+void
+fip64_remove_mapping(fip64_tenant_t *tenant,
               fip64_ip4_ip6_value_t *ip6_value,
               fip64_ip6_ip4_value_t *ip4_value)
 {
@@ -150,7 +160,10 @@ cleanup_entry(fip64_tenant_t *tenant,
               ip6_address_t *ip6,
               fip64_ip6_ip4_value_t *ip4_value)
 {
-    fip64_pool_release(tenant->pool, *ip4_value);
+    if (ip4_value->lru_position != ~0)
+    {
+      fip64_pool_release(tenant->pool, *ip4_value);
+    }
     clib_mem_free(ip4_value);
     clib_mem_free(ip6);
 }
@@ -223,7 +236,7 @@ fip64_lookup_ip6_to_ip4(fip64_main_t * fip64_main,
     clib_warning("Expiring mapping: %U -> %U",
       format_ip6_address, &ip6_to_del->ip6_src,
       format_ip4_address, &ip4_to_del->ip4_src);
-    cleanup_mappings(tenant, ip6_to_del, ip4_to_del);
+    fip64_remove_mapping(tenant, ip6_to_del, ip4_to_del);
   }
   ip6_value.lru_position = ip4_value.lru_position;
   if (NULL != fip64_add_mapping(tenant, &ip6_value, &ip4_value))
@@ -241,9 +254,12 @@ fip64_lookup_ip4_to_ip6(fip64_main_t * fip64_main,
                         ip6_address_t * ip6_src, ip6_address_t * ip6_dst)
 {
   fip64_ip4key_t key;
-  fip64_ip6_ip4_value_t ip4_value;
+
+  memset(&key, 0, sizeof(key));
   key.fixed = ip4->dst_address;
   key.table_id = ip4->table_id;
+
+  fip64_ip6_ip4_value_t ip4_value;
 
   // search mapping in configured FIPs
   uword *p = hash_get_mem(fip64_main->fixed4_mapping_hash, &key);

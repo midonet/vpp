@@ -18,6 +18,7 @@
 #include <vlibapi/api.h>
 
 #include <vnet/fip64/fip64.h>
+#include <vnet/fip64/flowstate.h>
 
 extern clib_error_t *test_pool();
 
@@ -32,6 +33,122 @@ static void init_ip_mains(ip6_main_t * ip6_main,
   ip4_main->host_config.ttl = 64;
   ip6_main->flow_hash_seed = 0xdeadbeef;
   ip4_main->host_config.ttl = 64;
+}
+
+#define MAKE_IPV4(A,B,C,D) clib_host_to_net_u32((A) << 24 | (B) << 16 | C << 8 | D)
+#define SAME_IPV6(A, B) ( (A)->as_u64[0] == (B)->as_u64[0] && \
+                          (A)->as_u64[1] == (B)->as_u64[1])
+
+static clib_error_t *
+test_flowstate ()
+{
+  u32 vni = 0x123456,
+      table_id = 1;
+  clib_error_t * error = 0;
+  ip4_main_t ip4_main;
+  ip6_main_t ip6_main;
+  fip64_main_t fip64_main;
+  fip64_ip4_t mapped4;
+  ip4_address_t fixed4, pool_start, pool_end;
+
+  struct {
+    ip6_address_t src_address;
+    ip6_address_t dst_address;
+  } ip6, output_ip6;
+
+  init_ip_mains(&ip6_main, &ip4_main);
+  fip64_main_init(NULL, &fip64_main, &ip6_main, &ip4_main);
+
+  // disable adjacencies under testing (causing crash)
+  fip64_main.testing = true;
+
+  ip6.src_address.as_u64[0] = clib_host_to_net_u64(0x2001);
+  ip6.src_address.as_u64[1] = clib_host_to_net_u64(0x1);
+  ip6.dst_address.as_u64[0] = clib_host_to_net_u64(0x4001);
+  ip6.dst_address.as_u64[1] = clib_host_to_net_u64(0x100);
+
+  pool_start.as_u32 = MAKE_IPV4(192, 168, 0, 1);
+  pool_end.as_u32 = MAKE_IPV4(192, 168, 0, 254);
+  fixed4.as_u32 = MAKE_IPV4(10, 0, 0, 2);
+  mapped4.dst_address = fixed4;
+  mapped4.src_address.as_u32 = MAKE_IPV4(192, 168, 255, 1);
+  mapped4.table_id = table_id;
+
+  _assert(0 == fip64_add(&fip64_main,
+                         &ip6.dst_address,
+                         fixed4,
+                         pool_start,
+                         pool_end,
+                         table_id,
+                         vni));
+
+  /* nothing mapped */
+  _assert( 0 == fip64_lookup_ip4_to_ip6 (&fip64_main,
+                                         &mapped4,
+                                         &output_ip6.src_address,
+                                         &output_ip6.dst_address));
+
+
+  /*
+   * wrong messages
+   */
+  fip64_flowstate_msg_t msg;
+  memset (&msg, 0, sizeof(msg));
+  msg.version = 1;
+  fip64_flowstate_set_op (&msg, FLOWSTATE_OP_ADD);
+  msg.vni = clib_host_to_net_u32 (vni);
+  msg.client_ipv6.as_u64[0] = clib_host_to_net_u64 (0xbbbb000000000000L);
+  msg.client_ipv6.as_u64[1] = clib_host_to_net_u64 (0xb);
+  msg.allocated_ipv4 = mapped4.src_address;
+  msg.fixed_ipv4 = mapped4.dst_address;
+
+  // bad version
+  msg.version --;
+  _assert (! fip64_flowstate_message (&fip64_main, (u8*)&msg, sizeof(msg)));
+  msg.version ++;
+
+  // bad vni
+  msg.vni --;
+  _assert (! fip64_flowstate_message (&fip64_main, (u8*)&msg, sizeof(msg)));
+  msg.vni ++;
+
+  // bad fixed_ipv4
+  msg.fixed_ipv4.as_u32 --;
+  _assert (! fip64_flowstate_message (&fip64_main, (u8*)&msg, sizeof(msg)));
+  msg.fixed_ipv4.as_u32 ++;
+
+  // too large
+  _assert (! fip64_flowstate_message (&fip64_main, (u8*)&msg, sizeof(msg) - 1));
+
+  // too small
+  _assert (! fip64_flowstate_message (&fip64_main, (u8*)&msg, sizeof(msg) + 1));
+
+  // correct mapping
+  _assert (fip64_flowstate_message (&fip64_main, (u8*)&msg, sizeof(msg)));
+
+  // repeated mapping
+  _assert (!fip64_flowstate_message (&fip64_main, (u8*)&msg, sizeof(msg)));
+
+  // check mapping
+  _assert( 0 != fip64_lookup_ip4_to_ip6 (&fip64_main,
+          &mapped4,
+          &output_ip6.src_address,
+          &output_ip6.dst_address));
+
+  _assert ( SAME_IPV6(&msg.client_ipv6, &output_ip6.src_address) );
+  _assert ( SAME_IPV6(&ip6.dst_address, &output_ip6.dst_address) );
+
+  // dest delete
+  fip64_flowstate_set_op (&msg, FLOWSTATE_OP_DEL);
+  _assert (fip64_flowstate_message (&fip64_main, (u8*)&msg, sizeof(msg)));
+
+  _assert( 0 == fip64_lookup_ip4_to_ip6 (&fip64_main,
+          &mapped4,
+          &output_ip6.src_address,
+          &output_ip6.dst_address));
+
+done:
+  return error;
 }
 
 static clib_error_t *
@@ -50,7 +167,7 @@ test_lookup ()
   } ip6, output_ip6;
 
   init_ip_mains(&ip6_main, &ip4_main);
-  fip64_main_init(&fip64_main, &ip6_main, &ip4_main);
+  fip64_main_init(NULL, &fip64_main, &ip6_main, &ip4_main);
 
   // disable adjacencies under testing (causing crash)
   fip64_main.testing = true;
@@ -132,7 +249,7 @@ test_reuse_impl (u32 start, u32 end)
 
   ip6_address_t ip6_start_src_address;
   init_ip_mains(&ip6_main, &ip4_main);
-  fip64_main_init(&fip64_main, &ip6_main, &ip4_main);
+  fip64_main_init(NULL, &fip64_main, &ip6_main, &ip4_main);
 
   // disable adjacencies under testing (causing crash)
   fip64_main.testing = true;
@@ -216,7 +333,8 @@ test_reuse()
 #define foreach_test_case                 \
   _(reuse)                                \
   _(lookup)                               \
-  _(pool)
+  _(pool)                                 \
+  _(flowstate)
 
 int run_tests (void)
 {
