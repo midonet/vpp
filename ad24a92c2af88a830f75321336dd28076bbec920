@@ -1,0 +1,73 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "3ab451fb_59b9e42d",
+        "filename": "vnet/vnet/fip64/flowstate.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 107,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-12-13T10:43:04Z",
+      "side": 1,
+      "message": "Why is this reachable?",
+      "range": {
+        "startLine": 106,
+        "startChar": 4,
+        "endLine": 107,
+        "endChar": 64
+      },
+      "revId": "ad24a92c2af88a830f75321336dd28076bbec920",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3ab451fb_19823c53",
+        "filename": "vnet/vnet/fip64/flowstate.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 127,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-12-13T10:43:04Z",
+      "side": 1,
+      "message": "I don\u0027t understand this case. The ip6 address is not in the mapping, but ipv4 is. How is it possible? I thought that these two hashes are always updated together",
+      "range": {
+        "startLine": 116,
+        "startChar": 1,
+        "endLine": 127,
+        "endChar": 57
+      },
+      "revId": "ad24a92c2af88a830f75321336dd28076bbec920",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "3ab451fb_e6112f5f",
+        "filename": "vnet/vnet/fip64/flowstate.h",
+        "patchSetId": 2
+      },
+      "lineNbr": 35,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2016-12-13T10:43:04Z",
+      "side": 1,
+      "message": "Modifies too much bits, should be something like:\nop_mask \u003d 3 \u003c\u003c 6;\nflags[0] \u0026\u003d ~op_mask;\nflags[0] |\u003d OP \u003c\u003c 6",
+      "range": {
+        "startLine": 35,
+        "startChar": 40,
+        "endLine": 35,
+        "endChar": 73
+      },
+      "revId": "ad24a92c2af88a830f75321336dd28076bbec920",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
