@@ -84,6 +84,10 @@ pkinject_by_callback(pkinject_t *p,
 void
 pkinject_flush(pkinject_t *p);
 
+/* pkinject_release
+ * frees the pkinject structure.
+ * Warning: unflushed packets are dropped
+ */
 void
 pkinject_release (pkinject_t* p);
 

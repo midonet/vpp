@@ -728,6 +728,23 @@ fip64_sync_enable (vlib_main_t * vm, vnet_main_t *vnm, u32 vrf_id)
 }
 
 static clib_error_t*
+fip64_sync_disable (vlib_main_t * vm, vnet_main_t *vnm)
+{
+  fip64_main_t *fip64_main = &_fip64_main;
+
+  pkinject_t *pki = fip64_main->pkinject;
+
+  if (pki == 0)
+  {
+    return clib_error_return (0, "Sync already disabled.");
+  }
+
+  fip64_main->pkinject = 0;
+  pkinject_release (pki);
+  return 0;
+}
+
+static clib_error_t*
 fip64_sync_command_fn (vlib_main_t * vm, unformat_input_t * input,
                        vlib_cli_command_t * cmd)
 {
@@ -739,15 +756,19 @@ fip64_sync_command_fn (vlib_main_t * vm, unformat_input_t * input,
   if (!unformat_user (input, unformat_line_input, line_input))
     return 0;
 
-  if (!unformat (line_input, "%d", &vrf_id))
+  if (unformat (line_input, "disable"))
   {
-    error = clib_error_return (0, "invalid input: expected VRF id.");
-    goto end;
+    error = fip64_sync_disable (vm, vnm);
+  }
+  else if (unformat (line_input, "%d", &vrf_id))
+  {
+    error = fip64_sync_enable (vm, vnm, vrf_id);
+  }
+  else
+  {
+    error = clib_error_return (0, "invalid input: expected VRF id or `disable`.");
   }
 
-  error = fip64_sync_enable (vm, vnm, vrf_id);
-
-end:
   unformat_free (line_input);
   return error;
 }

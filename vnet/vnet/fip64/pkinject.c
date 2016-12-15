@@ -33,23 +33,27 @@ pkinject_alloc (vlib_main_t *vm,
   return p;
 }
 
+static void
+frame_cleanup (vlib_main_t *vm, vlib_node_runtime_t *nr, vlib_frame_t *frame)
+{
+  if (frame->n_vectors)
+  {
+    u32 *buffers;
+    buffers = vlib_frame_args (frame);
+    vlib_buffer_free (vm, buffers, frame->n_vectors);
+  }
+
+  vlib_frame_free (vm, nr, frame);
+}
+
 void
 pkinject_release (pkinject_t *p)
 {
   if (p->current_frame)
   {
-    /* I don't know how to release a frame that's been allocated
-     * by vlib_get_frame_to_node.
-     * there is vlib_frame_free, but it requires a node runtime.
-     * Maybe this whole code shouldn't be run outside a node runtime
-     * anyway.
-     */
-    // two choices:
-    //clib_warning ("pkinject_release: Leaking packets. Flush them before releasing");
-    // -or-
-    //pkinject_flush (p);
-    /* it doesn't matter much, as nodes are not freed, so this function will 
-     * never be called in common usage */
+    vlib_node_runtime_t *nr = vlib_node_get_runtime (p->vm,
+                                                     p->target_node_index);
+    frame_cleanup (p->vm, nr, p->current_frame);
   }
   clib_mem_free (p);
 }
@@ -89,7 +93,6 @@ pkinject_buffer (pkinject_t *p,
   }
 }
 
-
 void
 pkinject_flush(pkinject_t *p)
 {
@@ -112,6 +115,7 @@ pkinject_by_index (pkinject_t *p,
 
   pkinject_buffer (p, buffer_index, buffer, flags);
 }
+
 void
 pkinject_by_callback (pkinject_t *p,
                       pkinject_generator_t callback,
