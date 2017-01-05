@@ -1,27 +1,21 @@
 #!/bin/bash
 
-TAG=$(git describe | cut -d- -f1 | sed -e 's/^v//')
-ADD=$(git describe | cut -s -d- -f2)
-CMT=$(git describe --dirty --match 'v*'| cut -s -d- -f3,4)
+cd $(dirname "$(readlink -f $0)")
 
-if [ -n "${BUILD_NUMBER}" ]; then
-       BLD="~b${BUILD_NUMBER}"
-fi
+
+SHA=$(git show --oneline -s | awk '{ print $1 }')
+TIMESTAMP=$(date +%s)
+VERSION=$(cat ../../VERSION.midokura | grep -v ^# | head -1 \
+          | sed "s/dev/dev$TIMESTAMP.$SHA/" )
 
 if [ "$1" = "rpm-version" ]; then
-  echo ${TAG}
-  exit
+    echo $VERSION | awk -F- '{ print $1 }'
+    exit
 fi
 
 if [ "$1" = "rpm-release" ]; then
-  [ -z "${ADD}" ] && echo release && exit
-  CMT=$(git describe --dirty --match 'v*'| cut -s -d- -f3,4 | sed 's/-/_/')
-  echo ${ADD}${CMT:+~${CMT}}${BLD}
-  exit
+    echo $VERSION | awk -F- '{ print $2 }'
+    exit
 fi
 
-if [ -n "${ADD}" ]; then
-  echo ${TAG}-${ADD}${CMT:+~${CMT}}${BLD}
-else
-  echo ${TAG}
-fi
+echo $VERSION

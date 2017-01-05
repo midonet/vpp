@@ -1,0 +1,23 @@
+# Version format is as follows.
+#
+# For development:
+#     <upstream-version>-mido<midonetversion>~dev
+# For release candidates:
+#     <upstream-version>-mido<midonetversion>~rc<candidateversion>
+# For releases:
+#     <upstream-version>-mido<midonetversion>
+# For hotfixes:
+#     <upstream-version>-mido<midonetversion>~hf<hotfixversion>
+#
+# Debian and Redhat package manages will sort in the following order,
+# so later packages will override older ones.
+#
+#     16.09-mido5.4.0~dev<timestamp>.<sha>
+#     16.09-mido5.4.0~rc<version>
+#     16.09-mido5.4.0
+#     16.09-mido5.4.0+hf<version>
+#
+# build-root/script/version will add timestamp and sha for dev.
+#
+# This file should only contain one uncommented line with the version.
+16.09-mido5.4.0~dev
