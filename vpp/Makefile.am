@@ -129,7 +129,7 @@ SUFFIXES = .api.h .api
 
 noinst_PROGRAMS += test_client
 
-test_client_SOURCES = vpp-api/test_client.c
+test_client_SOURCES = vpp-api/test_client.c ../vpp-api-test/vat/plugin_api.c
 test_client_LDADD = -lvlibmemoryclient -lvlibapi -lsvm -lvppinfra \
 	-lpthread -lm -lrt
 

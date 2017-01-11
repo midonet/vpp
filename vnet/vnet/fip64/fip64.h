@@ -17,8 +17,8 @@
 
 #include <vppinfra/error.h>
 
-#include "fip64_types.h"
-#include "fip64_pool.h"
+#include <vnet/fip64/fip64_types.h>
+#include <vnet/fip64/fip64_pool.h>
 
 /**
  * Initial fip64 main structure. Visible for unit tests.
@@ -37,6 +37,7 @@ fip64_main_init(vlib_main_t *vm,
  * @param[in] pool_start first address for IP4 source allocation
  * @param[in] pool_end last address for IP4 source allocation
  * @param[in] table_id VRF table id
+ * @param[in] vni VXLAN network identifier
  */
 extern clib_error_t *
 fip64_add(fip64_main_t *fip64_main,
@@ -54,6 +55,22 @@ fip64_add(fip64_main_t *fip64_main,
  */
 extern clib_error_t *
 fip64_delete(fip64_main_t *fip64_main, ip6_address_t *fip6);
+
+/**
+ * Enable state synchronization
+ *
+ * TODO: describe params
+ */
+extern clib_error_t*
+fip64_sync_enable (vlib_main_t * vm, vnet_main_t *vnm, u32 vrf_id);
+
+/**
+ * Disable state synchronization
+ *
+ * TODO: describe params
+ */
+extern clib_error_t*
+fip64_sync_disable (vlib_main_t * vm, vnet_main_t *vnm);
 
 /**
  * Lookup IP4 (src,dst) addresses for a given IP6 (src,dst) addresses.
