@@ -3328,7 +3328,11 @@ _(ipfix_enable_reply)                                   \
 _(pg_capture_reply)                                     \
 _(pg_enable_disable_reply)                              \
 _(ip_source_and_port_range_check_add_del_reply)         \
-_(ip_source_and_port_range_check_interface_add_del_reply)
+_(ip_source_and_port_range_check_interface_add_del_reply)\
+_(fip64_add_reply)                                      \
+_(fip64_del_reply)                                      \
+_(fip64_sync_enable_reply)                              \
+_(fip64_sync_disable_reply)
 
 #define _(n)                                    \
     static void vl_api_##n##_t_handler          \
@@ -3546,7 +3550,12 @@ _(IP_SOURCE_AND_PORT_RANGE_CHECK_ADD_DEL_REPLY,                         \
 _(IP_SOURCE_AND_PORT_RANGE_CHECK_INTERFACE_ADD_DEL_REPLY,               \
  ip_source_and_port_range_check_interface_add_del_reply)                \
 _(IPSEC_GRE_ADD_DEL_TUNNEL_REPLY, ipsec_gre_add_del_tunnel_reply)       \
-_(IPSEC_GRE_TUNNEL_DETAILS, ipsec_gre_tunnel_details)
+_(IPSEC_GRE_TUNNEL_DETAILS, ipsec_gre_tunnel_details)                   \
+_(FIP64_ADD_REPLY, fip64_add_reply)                                     \
+_(FIP64_DEL_REPLY, fip64_del_reply)                                     \
+_(FIP64_SYNC_ENABLE_REPLY, fip64_sync_enable_reply)                     \
+_(FIP64_SYNC_DISABLE_REPLY, fip64_sync_disable_reply)
+
 
 /* M: construct, but don't yet send a message */
 
@@ -15093,6 +15102,138 @@ api_ipsec_gre_tunnel_dump (vat_main_t * vam)
 }
 
 static int
+api_fip64_add (vat_main_t * vam)
+{
+  unformat_input_t * i = vam->input;
+  vl_api_fip64_add_t *mp;
+  f64 timeout;
+
+  ip6_address_t fip6;
+  u8 fip6_set = 0;
+  ip4_address_t fixed4;
+  u8 fixed4_set = 0;
+  ip4_address_t pool_start;
+  pool_start.as_u32 = 0;
+  ip4_address_t pool_end;
+  pool_end.as_u32 = 0;
+  u32 table_id = 0;
+  u32 vni = 0;
+
+  /* Parse args required to build the message */
+  while (unformat_check_input (i) != UNFORMAT_END_OF_INPUT)
+    {
+      if (unformat (i, "fip6 %U", unformat_ip6_address, &fip6))
+          fip6_set = 1;
+      else if(unformat (i, "fixed4 %U", unformat_ip4_address, &fixed4))
+          fixed4_set = 1;
+      else if(unformat (i, "pool_start %U", unformat_ip4_address, &pool_start))
+          ;
+      else if(unformat (i, "pool_end %U", unformat_ip4_address, &pool_end))
+          ;
+      else if(unformat (i, "table_id %d", &table_id))
+          ;
+      else if(unformat (i, "vni %d", &vni))
+          ;
+    }
+
+  if (fip6_set == 0) {
+      errmsg ("missing fip6\n");
+      return -99;
+  }
+
+  if (fixed4_set == 0) {
+      errmsg ("missing fixed4\n");
+      return -99;
+  }
+
+  M(FIP64_ADD, fip64_add);
+
+  memcpy(mp->fip6, fip6.as_u8, sizeof(mp->fip6));
+  memcpy(mp->fixed4, fixed4.as_u8, sizeof(mp->fixed4));
+  memcpy(mp->pool_start, pool_start.as_u8, sizeof(mp->pool_start));
+  memcpy(mp->pool_end, pool_end.as_u8, sizeof(mp->pool_end));
+  mp->table_id = table_id;
+  mp->vni = vni;
+
+  S; W;
+}
+
+static int
+api_fip64_del (vat_main_t * vam)
+{
+  unformat_input_t * i = vam->input;
+  vl_api_fip64_del_t *mp;
+  f64 timeout;
+
+  ip6_address_t fip6;
+  u8 fip6_set = 0;
+
+  /* Parse args required to build the message */
+  while (unformat_check_input (i) != UNFORMAT_END_OF_INPUT)
+    {
+        if (unformat (i, "fip6 %U", unformat_ip6_address, &fip6))
+            fip6_set = 1;
+    }
+
+  if (fip6_set == 0) {
+      errmsg ("missing fip6\n");
+      return -99;
+  }
+
+  M(FIP64_DEL, fip64_del);
+
+  memcpy(mp->fip6, fip6.as_u8, sizeof(mp->fip6));
+
+  S; W;
+}
+
+static int
+api_fip64_sync_enable (vat_main_t * vam)
+{
+  unformat_input_t * i = vam->input;
+  vl_api_fip64_sync_enable_t *mp;
+  f64 timeout;
+
+  u32 vrf_id = 0;
+  u8 vrf_id_set = 0;
+
+  /* Parse args required to build the message */
+  while (unformat_check_input (i) != UNFORMAT_END_OF_INPUT)
+    {
+        if (unformat (i, "vrf_id %d", &vrf_id_set))
+            vrf_id_set = 1;
+    }
+
+  if (vrf_id_set == 0) {
+      errmsg ("missing vrf_id\n");
+      return -99;
+  }
+
+  M(FIP64_SYNC_ENABLE, fip64_sync_enable);
+
+  mp->vrf_id = vrf_id;
+
+  S; W;
+}
+
+static int
+api_fip64_sync_disable (vat_main_t * vam)
+{
+  unformat_input_t * i = vam->input;
+  vl_api_fip64_sync_disable_t *mp;
+  f64 timeout;
+
+  /* Parse args required to build the message */
+  while (unformat_check_input (i) != UNFORMAT_END_OF_INPUT)
+    {
+    }
+
+  M(FIP64_SYNC_DISABLE, fip64_sync_disable);
+
+  S; W;
+}
+
+static int
 q_or_quit (vat_main_t * vam)
 {
   longjmp (vam->jump_buf, 1);
@@ -15671,7 +15812,12 @@ _(ip_source_and_port_range_check_interface_add_del,                     \
   "[udp-in-vrf <id>] [udp-out-vrf <id>]")                               \
 _(ipsec_gre_add_del_tunnel,                                             \
   "src <addr> dst <addr> local_sa <sa-id> remote_sa <sa-id> [del]")     \
-_(ipsec_gre_tunnel_dump, "[sw_if_index <nn>]")
+_(ipsec_gre_tunnel_dump, "[sw_if_index <nn>]")                          \
+_(fip64_add, "fip6 <ip6> fixed4 <ip4> "                                 \
+   "[pool_start <ip4>] [pool_end <ip4>] [table_id <id>] [vni <vni>]")   \
+_(fip64_del, "fip6 <ip6>")                                              \
+_(fip64_sync_enable, "vrf_id <id>")                                     \
+_(fip64_sync_disable, "")
 
 /* List of command functions, CLI names map directly to functions */
 #define foreach_cli_function                                    \
