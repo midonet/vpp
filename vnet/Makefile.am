@@ -372,6 +372,7 @@ vnet/fip64/pkinject.c
 nobase_include_HEADERS +=                       \
 vnet/fip64/fip64.h                              \
 vnet/fip64/fip64_pool.h                         \
+vnet/fip64/fip64_types.h                        \
 vnet/fip64/pkinject.h
 
 if ENABLE_TESTS
