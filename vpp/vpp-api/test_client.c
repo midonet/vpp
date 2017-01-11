@@ -17,6 +17,7 @@
  *------------------------------------------------------------------
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -99,7 +100,7 @@ format_ethernet_address (u8 * s, va_list * args)
   u8 *a = va_arg (*args, u8 *);
 
   return format (s, "%02x:%02x:%02x:%02x:%02x:%02x",
-		 a[0], a[1], a[2], a[3], a[4], a[5]);
+         a[0], a[1], a[2], a[3], a[4], a[5]);
 }
 
 static void
@@ -359,6 +360,27 @@ format_ip4_address (u8 * s, va_list * args)
   return format (s, "%d.%d.%d.%d", a[0], a[1], a[2], a[3]);
 }
 
+/* Parse an IP4 address %d.%d.%d.%d. */
+uword unformat_ip4_address (unformat_input_t * input, va_list * args)
+{
+  u8 * result = va_arg (*args, u8 *);
+  unsigned a[4];
+
+  if (! unformat (input, "%d.%d.%d.%d", &a[0], &a[1], &a[2], &a[3]))
+    return 0;
+
+  if (a[0] >= 256 || a[1] >= 256 || a[2] >= 256 || a[3] >= 256)
+    return 0;
+
+  result[0] = a[0];
+  result[1] = a[1];
+  result[2] = a[2];
+  result[3] = a[3];
+
+  return 1;
+}
+
+
 /* Format an IP4 route destination and length. */
 u8 *
 format_ip4_address_and_length (u8 * s, va_list * args)
@@ -450,6 +472,100 @@ format_ip6_address_and_length (u8 * s, va_list * args)
   ip6_address_t *a = va_arg (*args, ip6_address_t *);
   u8 l = va_arg (*args, u32);
   return format (s, "%U/%d", format_ip6_address, a, l);
+}
+
+/* Parse an IP6 address. */
+uword unformat_ip6_address (unformat_input_t * input, va_list * args)
+{
+  ip6_address_t * result = va_arg (*args, ip6_address_t *);
+  u16 hex_quads[8];
+  uword hex_quad, n_hex_quads, hex_digit, n_hex_digits;
+  uword c, n_colon, double_colon_index;
+
+  n_hex_quads = hex_quad = n_hex_digits = n_colon = 0;
+  double_colon_index = ARRAY_LEN (hex_quads);
+  while ((c = unformat_get_input (input)) != UNFORMAT_END_OF_INPUT)
+    {
+      hex_digit = 16;
+      if (c >= '0' && c <= '9')
+    hex_digit = c - '0';
+      else if (c >= 'a' && c <= 'f')
+    hex_digit = c + 10 - 'a';
+      else if (c >= 'A' && c <= 'F')
+    hex_digit = c + 10 - 'A';
+      else if (c == ':' && n_colon < 2)
+    n_colon++;
+      else
+    {
+      unformat_put_input (input);
+      break;
+    }
+
+      /* Too many hex quads. */
+      if (n_hex_quads >= ARRAY_LEN (hex_quads))
+    return 0;
+
+      if (hex_digit < 16)
+    {
+      hex_quad = (hex_quad << 4) | hex_digit;
+
+      /* Hex quad must fit in 16 bits. */
+      if (n_hex_digits >= 4)
+        return 0;
+
+      n_colon = 0;
+      n_hex_digits++;
+    }
+      
+      /* Save position of :: */
+      if (n_colon == 2)
+    {
+      /* More than one :: ? */
+      if (double_colon_index < ARRAY_LEN (hex_quads))
+        return 0;
+      double_colon_index = n_hex_quads;
+    }
+
+      if (n_colon > 0 && n_hex_digits > 0)
+    {
+      hex_quads[n_hex_quads++] = hex_quad;
+      hex_quad = 0;
+      n_hex_digits = 0;
+    }
+    }
+
+  if (n_hex_digits > 0)
+    hex_quads[n_hex_quads++] = hex_quad;
+
+  {
+    word i;
+
+    /* Expand :: to appropriate number of zero hex quads. */
+    if (double_colon_index < ARRAY_LEN (hex_quads))
+      {
+    word n_zero = ARRAY_LEN (hex_quads) - n_hex_quads;
+
+    for (i = n_hex_quads - 1; i >= (signed) double_colon_index; i--)
+      hex_quads[n_zero + i] = hex_quads[i];
+
+    for (i = 0; i < n_zero; i++)
+        {
+            ASSERT ((double_colon_index + i) < ARRAY_LEN (hex_quads));
+            hex_quads[double_colon_index + i] = 0;
+        }
+
+    n_hex_quads = ARRAY_LEN (hex_quads);
+      }
+
+    /* Too few hex quads given. */
+    if (n_hex_quads < ARRAY_LEN (hex_quads))
+      return 0;
+
+    for (i = 0; i < ARRAY_LEN (hex_quads); i++)
+      result->as_u16[i] = clib_host_to_net_u16 (hex_quads[i]);
+
+    return 1;
+  }
 }
 
 static void
@@ -577,6 +693,30 @@ static void vl_api_sw_interface_set_l2_bridge_reply_t_handler
   fformat (stdout, "l2_bridge reply %d\n", ntohl (mp->retval));
 }
 
+static void vl_api_fip64_add_reply_t_handler
+  (vl_api_fip64_add_reply_t * mp)
+{
+  fformat (stdout, "fip64_add reply %d\n", ntohl (mp->retval));
+}
+
+static void vl_api_fip64_del_reply_t_handler
+  (vl_api_fip64_del_reply_t * mp)
+{
+  fformat (stdout, "fip64_del reply %d\n", ntohl (mp->retval));
+}
+
+static void vl_api_fip64_sync_enable_reply_t_handler
+  (vl_api_fip64_sync_enable_reply_t * mp)
+{
+  fformat (stdout, "fip64_sync_enable reply %d\n", ntohl (mp->retval));
+}
+
+static void vl_api_fip64_sync_disable_reply_t_handler
+  (vl_api_fip64_sync_disable_reply_t * mp)
+{
+  fformat (stdout, "fip64_sync_disable reply %d\n", ntohl (mp->retval));
+}
+
 static void
 noop_handler (void *notused)
 {
@@ -622,7 +762,11 @@ _(SW_INTERFACE_IP6_SET_LINK_LOCAL_ADDRESS_REPLY, sw_interface_ip6_set_link_local
 _(L2_PATCH_ADD_DEL_REPLY, l2_patch_add_del_reply)			\
 _(SR_TUNNEL_ADD_DEL_REPLY,sr_tunnel_add_del_reply)          \
 _(SW_INTERFACE_SET_L2_XCONNECT_REPLY, sw_interface_set_l2_xconnect_reply) \
-_(SW_INTERFACE_SET_L2_BRIDGE_REPLY, sw_interface_set_l2_bridge_reply)
+_(SW_INTERFACE_SET_L2_BRIDGE_REPLY, sw_interface_set_l2_bridge_reply)   \
+_(FIP64_ADD_REPLY, fip64_add_reply)                                     \
+_(FIP64_DEL_REPLY, fip64_del_reply)                                     \
+_(FIP64_SYNC_ENABLE_REPLY, fip64_sync_enable_reply)                     \
+_(FIP64_SYNC_DISABLE_REPLY, fip64_sync_disable_reply)
 
 int
 connect_to_vpe (char *name)
@@ -1355,6 +1499,102 @@ l2_bridge (test_main_t * tm)
   vl_msg_api_send_shmem (tm->vl_input_queue, (u8 *) & mp);
 }
 
+void
+cstring_init_ip4_address(char * const string, ...)
+{
+  va_list vl;
+  va_start(vl, string);
+  unformat_input_t input;
+  unformat_init_cstring(&input, string);
+  unformat_ip4_address(&input, &vl);
+}
+
+void
+ip4_address_init_cstring(ip4_address_t * ip4, char * const string)
+{
+  cstring_init_ip4_address(string, ip4);
+}
+
+void
+cstring_init_ip6_address(char * const string, ...)
+{
+  va_list vl;
+  va_start(vl, string);
+  unformat_input_t input;
+  unformat_init_cstring(&input, string);
+  unformat_ip6_address(&input, &vl);
+}
+
+void
+ip6_address_init_cstring(ip6_address_t * ip6, char * const string)
+{
+  cstring_init_ip6_address(string, ip6);
+}
+
+void
+fip64_add (test_main_t * tm)
+{
+    vl_api_fip64_add_t *mp;
+
+    mp = vl_msg_api_alloc (sizeof (*mp));
+    memset (mp, 0, sizeof (*mp));
+    mp->_vl_msg_id = ntohs (VL_API_FIP64_ADD);
+    mp->client_index = tm->my_client_index;
+    mp->context = 0xdeadbeef;
+    ip6_address_init_cstring((ip6_address_t*) mp->fip6, "bbbb::");
+    ip4_address_init_cstring((ip4_address_t*) mp->fixed4, "10.1.0.4");
+    ip4_address_init_cstring((ip4_address_t*) mp->pool_start, "192.168.0.100");
+    ip4_address_init_cstring((ip4_address_t*) mp->pool_end, "192.168.0.200");
+    mp->table_id = 0;
+    mp->vni = 0;
+
+    vl_msg_api_send_shmem (tm->vl_input_queue, (u8 *) & mp);
+}
+
+void
+fip64_del (test_main_t * tm)
+{
+    vl_api_fip64_del_t *mp;
+
+    mp = vl_msg_api_alloc (sizeof (*mp));
+    memset (mp, 0, sizeof (*mp));
+    mp->_vl_msg_id = ntohs (VL_API_FIP64_DEL);
+    mp->client_index = tm->my_client_index;
+    mp->context = 0xdeadbeef;
+    ip6_address_init_cstring((ip6_address_t*) mp->fip6, "bbbb::");
+
+    vl_msg_api_send_shmem (tm->vl_input_queue, (u8 *) & mp);
+}
+
+void
+fip64_sync_enable (test_main_t * tm)
+{
+    vl_api_fip64_sync_enable_t *mp;
+
+    mp = vl_msg_api_alloc (sizeof (*mp));
+    memset (mp, 0, sizeof (*mp));
+    mp->_vl_msg_id = ntohs (VL_API_FIP64_SYNC_ENABLE);
+    mp->client_index = tm->my_client_index;
+    mp->context = 0xdeadbeef;
+    mp->vrf_id = 1;
+
+    vl_msg_api_send_shmem (tm->vl_input_queue, (u8 *) & mp);
+}
+
+void
+fip64_sync_disable (test_main_t * tm)
+{
+    vl_api_fip64_sync_disable_t *mp;
+
+    mp = vl_msg_api_alloc (sizeof (*mp));
+    memset (mp, 0, sizeof (*mp));
+    mp->_vl_msg_id = ntohs (VL_API_FIP64_SYNC_DISABLE);
+    mp->client_index = tm->my_client_index;
+    mp->context = 0xdeadbeef;
+
+    vl_msg_api_send_shmem (tm->vl_input_queue, (u8 *) & mp);
+}
+
 int
 main (int argc, char **argv)
 {
@@ -1554,6 +1794,23 @@ main (int argc, char **argv)
 	  l2_bridge (tm);
 	  break;
 
+    case '$':
+      fip64_del (tm);
+      break;
+
+    case '%':
+      fip64_add (tm);
+      break;
+
+    case '(':
+      fip64_sync_enable(tm);
+      break;
+
+    case ')':
+      fip64_sync_disable(tm);
+      break;
+
+
 	case 'h':
 	  fformat (stdout, "q=quit,d=dump,L=link evts on,l=link evts off\n");
 	  fformat (stdout, "S=stats on,s=stats off\n");
@@ -1578,6 +1835,8 @@ main (int argc, char **argv)
 	  fformat (stdout, "Y=no ip6 nd prefix\n");
 	  fformat (stdout, "@=l2 xconnect\n");
 	  fformat (stdout, "#=l2 bridge\n");
+      fformat (stdout, "%%=fip64 add, $=fip64 del\n");
+      fformat (stdout, "(=fip64 sync enable, )=fip64 sync disable\n");
 
 	default:
 	  break;

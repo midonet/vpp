@@ -690,7 +690,7 @@ fip64_get_table_index (u32 table_id) {
   return result;
 }
 
-static clib_error_t*
+clib_error_t*
 fip64_sync_enable (vlib_main_t * vm, vnet_main_t *vnm, u32 vrf_id)
 {
   fip64_main_t *fip64_main = &_fip64_main;
@@ -712,7 +712,7 @@ fip64_sync_enable (vlib_main_t * vm, vnet_main_t *vnm, u32 vrf_id)
           : clib_error_return (0, "Unable to create packet injection");
 }
 
-static clib_error_t*
+clib_error_t*
 fip64_sync_disable (vlib_main_t * vm, vnet_main_t *vnm)
 {
   fip64_main_t *fip64_main = &_fip64_main;
@@ -811,10 +811,19 @@ VLIB_CLI_COMMAND(fip64_del_command, static) = {
 };
 /* *INDENT-ON* */
 
+/**
+ * Enable/disable mapping synchronization
+ *
+ * This command enables mapping synchronization among remote VPP processes,
+ * so all are aware of other processes' mappings. The VRF ID is needed as an
+ * parameter.
+ *
+ * To disable mapping synchronization, use 'disable' instead of a VRF ID.
+ */
 /* *INDENT-OFF* */
 VLIB_CLI_COMMAND(fip64_sync_command, static) = {
   .path = "fip64 sync",
-  .short_help = "<VRF id>",
+  .short_help = "[<VRF id>|disable]",
   .function = fip64_sync_command_fn,
 };
 /* *INDENT-ON* */
