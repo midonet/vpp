@@ -4802,3 +4802,91 @@ define ipsec_gre_tunnel_details {
     u8 src_address[4];
     u8 dst_address[4];
 };
+
+/** \brief Add an IP6 mapping for a fixed IP4
+    @param client_index - opaque cookie to identify the sender
+    @param context - sender context, to match reply w/ request
+    @param fip6 - the IP6 FIP address
+    @param fixed4 - the fixed IP4 address
+    @param pool_start - first address for IP4 source allocation (use 0.0.0.0 as default)
+    @param pool_end - last address for IP4 source allocation (use 0.0.0.0 as defaul)
+    @param table_id - VRF table id (use 0 as default)
+    @param vni - VXLAN network identifier (use 0 as default)
+*/
+define sw_interface_fip64_add {
+   u32 client_index;
+   u32 context;
+   u8 fip6[16];
+   u8 fixed4[4];
+   u8 pool_start[4];
+   u8 pool_end[4];
+   u32 table_id;
+   u32 vni;
+};
+
+/** \brief Reply for add an IP6 mapping for a fixed IP4
+    @param context - returned sender context, to match reply w/ request
+    @param retval - return code
+*/
+define sw_interface_fip64_add_reply {
+   u32 context;
+   i32 retval;
+};
+
+/** \brief Remove an IP6 mapping
+    @param client_index - opaque cookie to identify the sender
+    @param context - sender context, to match reply w/ request
+    @param[in] fip6 The IP6 FIP address
+*/
+define sw_interface_fip64_del {
+   u32 client_index;
+   u32 context;
+   u8 fip6[16];
+};
+
+/** \brief Reply for remove an IP6 mapping
+    @param context - returned sender context, to match reply w/ request
+    @param retval - return code
+*/
+define sw_interface_fip64_del_reply {
+   u32 context;
+   i32 retval;
+};
+
+/** \brief Enable state synchronization
+    @param client_index - opaque cookie to identify the sender
+    @param context - sender context, to match reply w/ request
+    @param vrf_id - the VRF ID
+*/
+define sw_interface_fip64_sync_enable {
+   u32 client_index;
+   u32 context;
+   u32 vrf_id;
+};
+
+/** \brief Reply for enable state synchronization
+    @param context - returned sender context, to match reply w/ request
+    @param retval - return code
+*/
+define sw_interface_fip64_sync_enable_reply {
+   u32 context;
+   i32 retval;
+};
+
+/** \brief Disable state synchronization
+    @param client_index - opaque cookie to identify the sender
+    @param context - sender context, to match reply w/ request
+*/
+define sw_interface_fip64_sync_disable {
+   u32 client_index;
+   u32 context;
+};
+
+/** \brief Reply for disable state synchronization
+    @param context - returned sender context, to match reply w/ request
+    @param retval - return code
+*/
+define sw_interface_fip64_sync_disable_reply {
+   u32 context;
+   i32 retval;
+};

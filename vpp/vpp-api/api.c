@@ -83,6 +83,7 @@
 #include <vnet/devices/netmap/netmap.h>
 #include <vnet/flow/flow_report.h>
 #include <vnet/ipsec-gre/ipsec_gre.h>
+#include <vnet/fip64/fip64.h>
 
 #undef BIHASH_TYPE
 #undef __included_bihash_template_h__
@@ -383,7 +384,11 @@ _(IP_SOURCE_AND_PORT_RANGE_CHECK_ADD_DEL,                               \
 _(IP_SOURCE_AND_PORT_RANGE_CHECK_INTERFACE_ADD_DEL,                     \
   ip_source_and_port_range_check_interface_add_del)                     \
 _(IPSEC_GRE_ADD_DEL_TUNNEL, ipsec_gre_add_del_tunnel)                   \
-_(IPSEC_GRE_TUNNEL_DUMP, ipsec_gre_tunnel_dump)
+_(IPSEC_GRE_TUNNEL_DUMP, ipsec_gre_tunnel_dump)                         \
+_(SW_INTERFACE_FIP64_ADD, sw_interface_fip64_add)                       \
+_(SW_INTERFACE_FIP64_DEL, sw_interface_fip64_del)                       \
+_(SW_INTERFACE_FIP64_SYNC_ENABLE, sw_interface_fip64_sync_enable)       \
+_(SW_INTERFACE_FIP64_SYNC_DISABLE, sw_interface_fip64_sync_disable)
 
 #define QUOTE_(x) #x
 #define QUOTE(x) QUOTE_(x)
@@ -8076,6 +8081,82 @@ static void vl_api_ipsec_gre_tunnel_dump_t_handler
       t = &igm->tunnels[igm->tunnel_index_by_sw_if_index[sw_if_index]];
       send_ipsec_gre_tunnel_details (t, q, mp->context);
     }
+}
+
+// miguel
+extern fip64_main_t _fip64_main;
+
+static void
+vl_api_sw_interface_fip64_add_t_handler(
+    vl_api_sw_interface_fip64_add_t *mp)
+{
+  vl_api_sw_interface_fip64_add_reply_t *rmp;
+  int rv = 0;
+
+  clib_error_t* error = fip64_add(&_fip64_main,
+                                  (ip6_address_t *) mp->fip6,
+                                  *(ip4_address_t *) mp->fixed4,
+                                  *(ip4_address_t *) mp->pool_start,
+                                  *(ip4_address_t *) mp->pool_end,
+                                  mp->table_id,
+                                  mp->vni);
+
+  if (error) {
+      rv = 1;
+  }
+
+  REPLY_MACRO(VL_API_SW_INTERFACE_FIP64_ADD);
+}
+
+static void
+vl_api_sw_interface_fip64_del_t_handler(
+    vl_api_sw_interface_fip64_del_t *mp)
+{
+  vl_api_sw_interface_fip64_del_reply_t *rmp;
+  int rv = 0;
+
+  clib_error_t* error = fip64_delete(&_fip64_main,
+                                     (ip6_address_t *) mp->fip6);
+
+  if (error) {
+      rv = 1;
+  }
+
+  REPLY_MACRO(VL_API_SW_INTERFACE_FIP64_DEL);
+}
+
+static void
+vl_api_sw_interface_fip64_sync_enable_t_handler(
+    vl_api_sw_interface_fip64_sync_enable_t *mp)
+{
+  vl_api_sw_interface_fip64_sync_enable_reply_t *rmp;
+  int rv = 0;
+
+  clib_error_t* error = fip64_sync_enable (vpe_api_main.vlib_main,
+                                           vpe_api_main.vnet_main,
+                                           mp->vrf_id);
+
+  if (error) {
+      rv = 1;
+  }
+
+  REPLY_MACRO(VL_API_SW_INTERFACE_FIP64_SYNC_ENABLE);
+}
+
+static void
+vl_api_sw_interface_fip64_sync_disable_t_handler(
+    vl_api_sw_interface_fip64_sync_disable_t *mp)
+{
+  vl_api_sw_interface_fip64_sync_disable_reply_t *rmp;
+  int rv = 0;
+
+  clib_error_t* error = fip64_sync_disable (vpe_api_main.vlib_main, vpe_api_main.vnet_main);
+
+  if (error) {
+      rv = 1;
+  }
+
+  REPLY_MACRO(VL_API_SW_INTERFACE_FIP64_SYNC_DISABLE);
 }
 
 #define BOUNCE_HANDLER(nn)                                              \

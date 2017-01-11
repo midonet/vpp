@@ -2570,6 +2570,66 @@ static void *vl_api_ipsec_gre_tunnel_dump_t_print
   FINISH;
 }
 
+// miguel
+
+static void *vl_api_sw_interface_fip64_add_t_print
+  (vl_api_sw_interface_fip64_add_t *mp, void *handle)
+{
+  u8 * s;
+
+  s = format (0, "SCRIPT: sw_interface_fip64_add ");
+
+  s = format (s, "fip6 %U ", format_ip6_address, (ip6_address_t *) mp->fip6); 
+
+  s = format (s, "fixed4 %U ", format_ip4_address, (ip4_address_t *) mp->fixed4);
+
+  s = format (s, "pool_start %U ", format_ip4_address,
+              (ip4_address_t *) mp->pool_start);
+
+  s = format (s, "pool_end %U ", format_ip4_address,
+              (ip4_address_t *) mp->pool_end);
+
+  s = format (s, "table_id %d ", ntohl (mp->table_id));
+
+  s = format (s, "vni %d ", ntohl (mp->vni));
+
+  FINISH
+}
+
+static void *vl_api_sw_interface_fip64_del_t_print
+  (vl_api_sw_interface_fip64_del_t *mp, void *handle)
+{
+  u8 * s;
+
+  s = format (0, "SCRIPT: sw_interface_fip64_del ");
+
+  s = format (s, "fip6 %U ", format_ip6_address, (ip6_address_t *) mp->fip6);
+
+  FINISH
+}
+
+static void *vl_api_sw_interface_fip64_sync_enable_t_print
+  (vl_api_sw_interface_fip64_sync_enable_t *mp, void *handle)
+{
+  u8 * s;
+
+  s = format (0, "SCRIPT: sw_interface_fip64_sync_enable ");
+
+  s = format (s, "vrf_id %d ", ntohl (mp->vrf_id));
+
+  FINISH
+}
+
+static void *vl_api_sw_interface_fip64_sync_disable_t_print
+  (vl_api_sw_interface_fip64_sync_disable_t *mp, void *handle)
+{
+  u8 * s;
+
+  s = format (0, "SCRIPT: sw_interface_fip64_sync_disable ");
+
+  FINISH
+}
+
 #define foreach_custom_print_no_arg_function                            \
 _(lisp_eid_table_map_dump)                                              \
 _(lisp_map_resolver_dump)                                               \
@@ -2716,7 +2776,12 @@ _(LISP_MAP_RESOLVER_DUMP, lisp_map_resolver_dump)                       \
 _(LISP_LOCATOR_SET_DUMP, lisp_locator_set_dump)                         \
 _(LISP_LOCATOR_SET_DUMP, lisp_locator_set_dump)                         \
 _(IPSEC_GRE_ADD_DEL_TUNNEL, ipsec_gre_add_del_tunnel)                   \
-_(IPSEC_GRE_TUNNEL_DUMP, ipsec_gre_tunnel_dump)
+_(IPSEC_GRE_TUNNEL_DUMP, ipsec_gre_tunnel_dump)                         \
+_(SW_INTERFACE_FIP64_ADD, sw_interface_fip64_add)                       \
+_(SW_INTERFACE_FIP64_DEL, sw_interface_fip64_del)                       \
+_(SW_INTERFACE_FIP64_SYNC_ENABLE, sw_interface_fip64_sync_enable)       \
+_(SW_INTERFACE_FIP64_SYNC_DISABLE, sw_interface_fip64_sync_disable)
+
   void
 vl_msg_api_custom_dump_configure (api_main_t * am)
 {
