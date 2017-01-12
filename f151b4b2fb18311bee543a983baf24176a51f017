@@ -2,6 +2,52 @@
   "comments": [
     {
       "key": {
+        "uuid": "fabf19d9_b98d6933",
+        "filename": "vpp-api-test/vat/api_format.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 15137,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2017-01-12T19:33:56Z",
+      "side": 1,
+      "message": "We could reuse code from fip64_add_command of fip64.c to avoid two different fip64_add commands. We could try to use generated \"fip64_add_handler_t\" to unify cmd line parse interfaces",
+      "range": {
+        "startLine": 15123,
+        "startChar": 2,
+        "endLine": 15137,
+        "endChar": 5
+      },
+      "revId": "f151b4b2fb18311bee543a983baf24176a51f017",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "fabf19d9_99998571",
+        "filename": "vpp/vpp-api/api.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 8099,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2017-01-12T19:33:56Z",
+      "side": 1,
+      "message": "This does not compiles with gcc 4.8.4\nWe should either first create structures and then pass them to fip64_add() or modify fip64_add() interface and pass all the parameters as pointers.",
+      "range": {
+        "startLine": 8097,
+        "startChar": 34,
+        "endLine": 8099,
+        "endChar": 65
+      },
+      "revId": "f151b4b2fb18311bee543a983baf24176a51f017",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "fabf19d9_39ccb988",
         "filename": "vpp/vpp-api/api.c",
         "patchSetId": 2
