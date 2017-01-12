@@ -1,0 +1,27 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "fabf19d9_39ccb988",
+        "filename": "vpp/vpp-api/api.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 8107,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2017-01-12T19:09:11Z",
+      "side": 1,
+      "message": "NOTE: The lack of \u0027_REPLY\u0027 postfix made the previous changeset to create a reply with a wrong message ID (it uses the same message ID as the request instead of the one for the reply).",
+      "range": {
+        "startLine": 8107,
+        "startChar": 0,
+        "endLine": 8107,
+        "endChar": 38
+      },
+      "revId": "f151b4b2fb18311bee543a983baf24176a51f017",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    }
+  ]
+}
