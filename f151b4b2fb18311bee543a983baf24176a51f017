@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "fabf19d9_19c5753b",
+        "filename": "vpp-api-test/vat/api_format.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 15137,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2017-01-12T19:43:37Z",
+      "side": 1,
+      "message": "Yes, I also think so. In the binary API it seems most comands tends to be more \"verbose\" and less \"human friendly\", but I think there is no reason to not find a trade off to converge both and reuse code.",
+      "parentUuid": "fabf19d9_b98d6933",
+      "range": {
+        "startLine": 15123,
+        "startChar": 2,
+        "endLine": 15137,
+        "endChar": 5
+      },
+      "revId": "f151b4b2fb18311bee543a983baf24176a51f017",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "fabf19d9_99998571",
         "filename": "vpp/vpp-api/api.c",
         "patchSetId": 2
@@ -36,6 +60,30 @@
       "writtenOn": "2017-01-12T19:33:56Z",
       "side": 1,
       "message": "This does not compiles with gcc 4.8.4\nWe should either first create structures and then pass them to fip64_add() or modify fip64_add() interface and pass all the parameters as pointers.",
+      "range": {
+        "startLine": 8097,
+        "startChar": 34,
+        "endLine": 8099,
+        "endChar": 65
+      },
+      "revId": "f151b4b2fb18311bee543a983baf24176a51f017",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "fabf19d9_59cbed53",
+        "filename": "vpp/vpp-api/api.c",
+        "patchSetId": 2
+      },
+      "lineNbr": 8099,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2017-01-12T19:43:37Z",
+      "side": 1,
+      "message": "Uhm, good to know, it seems my gcc version is 5.4.0. I prefer the first option by now, to narrow the scope of the change.",
+      "parentUuid": "fabf19d9_99998571",
       "range": {
         "startLine": 8097,
         "startChar": 34,
