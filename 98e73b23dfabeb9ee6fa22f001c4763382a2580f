@@ -22,6 +22,30 @@
       "revId": "98e73b23dfabeb9ee6fa22f001c4763382a2580f",
       "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
       "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "fabf19d9_d8125bb4",
+        "filename": "vpp/vpp-api/vpe.api",
+        "patchSetId": 1
+      },
+      "lineNbr": 4816,
+      "author": {
+        "id": 1006717
+      },
+      "writtenOn": "2017-01-12T10:27:53Z",
+      "side": 1,
+      "message": "I will try. At the beginning I thought that maybe it could be one kind of convention, as in \"set interface l2 bridge\" mapped to \"sw_interface_set_l2_bridge\" in the example provided at https://wiki.fd.io/view/VPP/How_to_Create_a_VPP_binary_control-plane_API and other methods in the API. But it\u0027s true that the \"sw_interface_\" part could come from the \"interface\" in the \"set _interface_ l2 bridge\" that could be moved to the beginning.",
+      "parentUuid": "fabf19d9_58d2cb01",
+      "range": {
+        "startLine": 4816,
+        "startChar": 0,
+        "endLine": 4816,
+        "endChar": 29
+      },
+      "revId": "98e73b23dfabeb9ee6fa22f001c4763382a2580f",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
     }
   ]
 }
