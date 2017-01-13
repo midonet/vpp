@@ -8106,7 +8106,7 @@ vl_api_fip64_add_t_handler(
                                   mp->vni);
 
   if (error) {
-      rv = 1;
+      rv = -1;
   }
 
   REPLY_MACRO(VL_API_FIP64_ADD_REPLY);
@@ -8123,7 +8123,7 @@ vl_api_fip64_del_t_handler(
                                      (ip6_address_t *) mp->fip6);
 
   if (error) {
-      rv = 1;
+      rv = -1;
   }
 
   REPLY_MACRO(VL_API_FIP64_DEL_REPLY);
@@ -8141,7 +8141,7 @@ vl_api_fip64_sync_enable_t_handler(
                                            mp->vrf_id);
 
   if (error) {
-      rv = 1;
+      rv = -1;
   }
 
   REPLY_MACRO(VL_API_FIP64_SYNC_ENABLE_REPLY);
@@ -8157,7 +8157,7 @@ vl_api_fip64_sync_disable_t_handler(
   clib_error_t* error = fip64_sync_disable (vpe_api_main.vlib_main, vpe_api_main.vnet_main);
 
   if (error) {
-      rv = 1;
+      rv = -1;
   }
 
   REPLY_MACRO(VL_API_FIP64_SYNC_DISABLE_REPLY);
