@@ -25,6 +25,30 @@
     },
     {
       "key": {
+        "uuid": "fabf19d9_0194d7df",
+        "filename": "vpp-api/java/jvpp-core/org/openvpp/jvpp/core/test/FutureApiTest.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 120,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2017-01-13T12:07:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fabf19d9_e1ee83eb",
+      "range": {
+        "startLine": 120,
+        "startChar": 33,
+        "endLine": 120,
+        "endChar": 56
+      },
+      "revId": "ea026bb82e23d2e7bfbdc6cf8bbbdf691bd690e2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "fabf19d9_c1d37f37",
         "filename": "vpp-api/java/jvpp-core/org/openvpp/jvpp/core/test/FutureApiTest.java",
         "patchSetId": 2
@@ -36,6 +60,30 @@
       "writtenOn": "2017-01-13T11:07:26Z",
       "side": 1,
       "message": "For symmetry, add another log for Fip64Del request or put \"Sending Fip64Add/Del requests...\" or similar.",
+      "range": {
+        "startLine": 129,
+        "startChar": 0,
+        "endLine": 129,
+        "endChar": 48
+      },
+      "revId": "ea026bb82e23d2e7bfbdc6cf8bbbdf691bd690e2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "fabf19d9_2187dbb6",
+        "filename": "vpp-api/java/jvpp-core/org/openvpp/jvpp/core/test/FutureApiTest.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 129,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2017-01-13T12:07:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fabf19d9_c1d37f37",
       "range": {
         "startLine": 129,
         "startChar": 0,
@@ -71,6 +119,30 @@
     },
     {
       "key": {
+        "uuid": "fabf19d9_e190c3ee",
+        "filename": "vpp-api/java/jvpp-core/org/openvpp/jvpp/core/test/FutureApiTest.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 162,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2017-01-13T12:07:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fabf19d9_21e59b08",
+      "range": {
+        "startLine": 162,
+        "startChar": 33,
+        "endLine": 162,
+        "endChar": 64
+      },
+      "revId": "ea026bb82e23d2e7bfbdc6cf8bbbdf691bd690e2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
         "uuid": "fabf19d9_41e88fe2",
         "filename": "vpp-api/java/jvpp-core/org/openvpp/jvpp/core/test/FutureApiTest.java",
         "patchSetId": 2
@@ -82,6 +154,30 @@
       "writtenOn": "2017-01-13T11:07:26Z",
       "side": 1,
       "message": "Same here",
+      "range": {
+        "startLine": 171,
+        "startChar": 0,
+        "endLine": 171,
+        "endChar": 55
+      },
+      "revId": "ea026bb82e23d2e7bfbdc6cf8bbbdf691bd690e2",
+      "serverId": "d5d70762-12d0-45a1-890d-524b12d3f735",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "fabf19d9_c1bc9f6e",
+        "filename": "vpp-api/java/jvpp-core/org/openvpp/jvpp/core/test/FutureApiTest.java",
+        "patchSetId": 2
+      },
+      "lineNbr": 171,
+      "author": {
+        "id": 1009315
+      },
+      "writtenOn": "2017-01-13T12:07:28Z",
+      "side": 1,
+      "message": "Done",
+      "parentUuid": "fabf19d9_41e88fe2",
       "range": {
         "startLine": 171,
         "startChar": 0,
