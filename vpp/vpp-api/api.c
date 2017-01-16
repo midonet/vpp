@@ -8102,8 +8102,8 @@ vl_api_fip64_add_t_handler(
                                   fixed4,
                                   pool_start,
                                   pool_end,
-                                  mp->table_id,
-                                  mp->vni);
+                                  ntohl(mp->table_id),
+                                  ntohl(mp->vni));
 
   if (error) {
       rv = -1;
@@ -8138,7 +8138,7 @@ vl_api_fip64_sync_enable_t_handler(
 
   clib_error_t* error = fip64_sync_enable (vpe_api_main.vlib_main,
                                            vpe_api_main.vnet_main,
-                                           mp->vrf_id);
+                                           ntohl(mp->vrf_id));
 
   if (error) {
       rv = -1;
