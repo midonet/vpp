@@ -8094,8 +8094,8 @@ vl_api_fip64_add_t_handler(
 
   ip4_address_t fixed4, pool_start, pool_end;
   memcpy(fixed4.as_u8, mp->fixed4, sizeof(fixed4));
-  memcpy(pool_start.as_u8, mp->fixed4, sizeof(pool_start));
-  memcpy(pool_end.as_u8, mp->fixed4, sizeof(pool_end));
+  memcpy(pool_start.as_u8, mp->pool_start, sizeof(pool_start));
+  memcpy(pool_end.as_u8, mp->pool_end, sizeof(pool_end));
 
   clib_error_t* error = fip64_add(&_fip64_main,
                                   (ip6_address_t *) mp->fip6,
