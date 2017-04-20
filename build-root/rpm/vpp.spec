@@ -3,8 +3,8 @@
 %define _unitdir         /lib/systemd/system
 %define _topdir          %(pwd)
 %define _builddir        %{_topdir}
-%define _version         %(../scripts/version rpm-version)
-%define _release         %(../scripts/version rpm-release)
+%global _version         %(../scripts/version rpm-version)
+%global _release         %(../scripts/version rpm-release)
 
 Name: vpp
 Summary: Vector Packet Processing
