@@ -20,4 +20,4 @@
 # build-root/script/version will add timestamp and sha for dev.
 #
 # This file should only contain one uncommented line with the version.
-16.09-mido5.6.0~dev
+16.09-mido5.6.0
