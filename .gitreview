@@ -2,4 +2,4 @@
 host=review.gerrithub.io
 port=29418
 project=midonet/vpp.git
-defaultbranch=v16.09-midonet
+defaultbranch=stable/v16.09-mido5.6.0
